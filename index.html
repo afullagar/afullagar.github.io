@@ -10,6 +10,7 @@
 - add background color to nodes - v21
 - add font and border color to nodes - v22
 - add touch controls - v24/v25
+- add delete option
 -->
 <head>
     <meta charset="utf-8">
@@ -132,8 +133,8 @@ else if (browserReport.search("chrome") != -1){
   document.addEventListener("click", createNodeText);
 
   document.addEventListener("mousedown", createMoveNode);
-  //hover modal test
   
+  //hover modal test
   document.addEventListener("contextmenu",createForm);
 
 //TOUCH EVENTS//
@@ -524,11 +525,12 @@ function createForm(e) {
         f.style.left = (e.clientX+20)+"px";
         f.style.top = (e.clientY+20)+"px";
 
-        document.getElementById("submitClose").addEventListener("mouseup", deleteForm);
-        document.getElementById("createChildNodeButton").addEventListener("mouseup", createChildNode); 
-        document.getElementById("deleteNodeButton").addEventListener("mouseup",() =>{
+        document.getElementById("submitClose").addEventListener("click", deleteForm);
+        document.getElementById("createChildNodeButton").addEventListener("click", createChildNode); 
+        document.getElementById("deleteNodeButton").addEventListener("click",() =>{
             
                 deleteNode(nodeSearch);
+                deleteForm();
             
         });
         //Get color and change it for the node and save in localstorage
@@ -619,21 +621,38 @@ function deleteNode(nodeSearch){
     //alert(alertPrompt);
     if (alertPrompt === true){
 
-        //DEBUG
-        let nodeDelete = document.getElementById(nodeSearch);
-         while (nodeDelete.firstChild) {
-            nodeDelete.removeChild(nodeDelete.firstChild);
-        }
+        //DEBUG - Delete line from localstorage
+        //load storage vars so can append
+        var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+        //delete object property
+        delete mfJson[nodeSearch];
+        //store nodename key
+        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
 
-        var x = document.getElementById(nodeSearch);
-        console.log("Form=",x);
-        x.remove();
+        //delete live ID's
+        //DOM
+        var nodeDelete = document.getElementById(nodeSearch);
+        nodeDelete.style.display = "none";
+        //nodeDelete.remove();
+        //SVG line
+        var svgLineId = "line-"+nodeSearch;
+        console.log("svgLineId:::",svgLineId);
+        var svgLine = document.getElementById(svgLineId);
+        console.log("svgLine:::",svgLine);
+        
+        svgLine.style.display = "none";
+        //svgLine.remove();
 
-        console.log("Node Deleted:::",nodeSearch);
+
+        console.log("Node and line Deleted:::",nodeSearch);
     }
     else{
         console.log("Node was not Deleted:::",nodeSearch);
+
+       
     }
+
+    
 }
 
 
