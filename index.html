@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<html lang="en">
 <!--Version: v25 2021Jan20-1.25
 - add load button (load an existing MF MM.)
 - add child button create and add value field to input elements
@@ -13,7 +13,8 @@
 - add delete option
 -->
 <head>
-    <meta charset="utf-8">
+    <meta Content-Type="text/html" charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title id="mfHtmlTitle">MindFully Maps</title>
 
 <style>
@@ -23,7 +24,7 @@ html, body {
     height: 100%;
     margin: 0px;
     position:absolute;
-    background-color: white;
+    background-color: rgb(240, 240, 240);
     }
 
 .defaultButton {
@@ -46,8 +47,13 @@ html, body {
     text-align: left;
     border: 1px solid black;
     border-radius: 1px;
-    border-top-right-radius: 10% 20%;
-    border-bottom-left-radius: 10% 20%;
+    border-top-right-radius: 5% 10%;
+    border-bottom-left-radius: 5% 10%;
+    border-top-left-radius: 5% 10%;
+    border-bottom-right-radius: 5% 10%;
+    
+    opacity: 1.0;
+    font-size:10px; 
 }
 
 </style>
@@ -59,13 +65,15 @@ html, body {
 <div id="dlExport"></div>
 
 <!--version-->
-<p id="mfVersion">1.0</p> 
+<p id="mfVersion">1.0</p>
+<p id="mfDateTimeLastSave"></p> 
 <button type="button" class="defaultButton" id="loadLocalStorage">Load from LocalStorage</button>
 <button type="button" class="defaultButton" id="createLocalStorage">Create to LocalStorage</button>
 <button type="button" class="defaultButton" id="exportLocalStorage">Export LocalStorage to File</button>
 <label for="importLocalStorage" class="defaultButton">Import Upload to LocalStorage</label> 
 <input type="file" accept="text/json" id="importLocalStorage" style="display: none;"></input>
 <button type="button" class="defaultButton" id="addNode">Create Node</button>
+<button type="button" class="defaultButton" id="checkDateTimeId">Check JSON File Date/Time</button>
 
 <script>
 //Use Strict
@@ -93,11 +101,12 @@ console.log("layout viewport Y:::",layoutViewPortY);
 console.log(navigator.userAgent);
 var browserReport = navigator.userAgent.toLowerCase();
 //console.log(browserReport);
+
 if (browserReport.search("firefox") != -1){
     console.log("Browser appears to be Firefox. ClientX/Y and PageX/Y is always zero so use global var!");
-    document.addEventListener("mouseover", (e)=>{
-        globalClientX = e.pageX;
-        globalClientY = e.pageY;
+    document.addEventListener("dragover", (e)=>{
+        globalClientX = e.clientX;
+        globalClientY = e.clientY;
     });
 }
 else if (browserReport.search("edg") != -1){
@@ -118,6 +127,8 @@ else if (browserReport.search("chrome") != -1){
 
   //add a node click  
   document.getElementById("addNode").addEventListener("click", createNode);
+  //add a node click  
+  document.getElementById("checkDateTimeId").addEventListener("click", checkFileDateTime);
   //load from local storage click
   document.getElementById("loadLocalStorage").addEventListener("click", loadLocalStorage);
   //add a local storage click
@@ -132,7 +143,7 @@ else if (browserReport.search("chrome") != -1){
   //add eventlistner for clicking into a node
   document.addEventListener("click", createNodeText);
 
-  document.addEventListener("mousedown", createMoveNode);
+  document.addEventListener("dragstart", createMoveNode);
   
   //hover modal test
   document.addEventListener("contextmenu",createForm);
@@ -143,6 +154,25 @@ else if (browserReport.search("chrome") != -1){
 document.addEventListener('touchstart', createNodeTouchEvent, {passive: false});
 //document.addEventListener("touchmove", createMoveNode);
 //
+
+function checkFileDateTime(e){
+    var getDateTimeString = window.prompt("Enter date time string on te end of the filename", "String?");
+    console.log(getDateTimeString);
+    var getDateTimeInteger = parseInt(getDateTimeString);
+    console.log(getDateTimeInteger);
+    let currentDateTimeString = Date.now();
+    console.log("current date-time",currentDateTimeString);
+    //debug and show date and time
+    var fileDateTime = new Date(getDateTimeInteger);
+    console.log(fileDateTime);
+    //debug date and time
+    var date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
+    var time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
+    //debug - show date and time
+    console.log(date+" "+time);
+    alert(fileDateTime);
+
+}
 
 //DEBUG Touch Events
 function createNodeTouchEvent(event){
@@ -243,56 +273,44 @@ function importLocalStorage(e){
     let fileChosen = document.getElementById("importLocalStorage");
     //create a new reader object to load file and read it
     let reader = new FileReader();
-    console.log(fileChosen.files[0]);
+    //console.log(fileChosen.files[0]);
+    //console.log("filechosen",fileChosen.files[0].name);
+    console.log("filechosen",fileChosen.files[0].lastModifiedDate);
+    var lastModifiedDateTimeFileString = fileChosen.files[0].lastModifiedDate;
+
+    var lastModifiedDateTime = document.getElementById("mfDateTimeLastSave");
+    lastModifiedDateTime.innerHTML = "Imported File Last Modified Date:::"+lastModifiedDateTimeFileString;
+    
     reader.readAsText(fileChosen.files[0]);
     reader.addEventListener('load', (e) => {
         if (e.type === "load") {
-        //get content of file that is base64 encoded and decode
-        var mfJsonStringBase64 = reader.result;
-        //Debug - base64 file
-        console.log(mfJsonStringBase64);
-        //decode file from base64
-        var mfJsonString = atob(mfJsonStringBase64);
-        //create object to extract version
-        var mfJsonObj = JSON.parse(mfJsonString);
-        console.log(mfJsonObj);
-        //set the key name from original obj
-        var mfHtmlTitle = mfJsonObj["mfHtmlTitle"];
-
-        //get localstorage key name form the filename
-        ///console.log(mfJsonString);
-        localStorage.setItem(mfHtmlTitle,mfJsonString);
-            //DEBUG more to be done with filename.
-    }
-
-        //DEBUG:
-        //console.log(reader.readyState);
-
-        ///////////////////////////////////
-        //Load back to web page after import
-        //location.reload();
+            //get content of file that is base64 encoded and decode
+            var mfJsonStringBase64 = reader.result;
+            //Debug - base64 file
+            //decode file from base64
+            var mfJsonString = atob(mfJsonStringBase64);
+            //create object to extract version
+            var mfJsonObj = JSON.parse(mfJsonString);
+            //set the key name from original obj
+            var mfHtmlTitle = mfJsonObj["mfHtmlTitle"];
+            //Set and Save to Local Storage
+            localStorage.setItem(mfHtmlTitle,mfJsonString);
+        }
   
         var localStorageKeyName = mfHtmlTitle;
-        console.log("Key Name:"+localStorageKeyName);
-  
         var x = document.getElementById("mfHtmlTitle");
         var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
         x.innerHTML = mfJson["mfHtmlTitle"];
         var result = mfJson["mfHtmlTitle"];
-        console.log(mfJson["mfHtmlTitle"]);
         document.getElementById("mfVersion").innerHTML = mfJson["mfVersion"];
     
         console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
     
-    
-        // set the element's new position:
-        //elementMydiv.style.top = mindfullyJson.mydivTop + "px";
-    
-        //elementMydiv.style.left = mindfullyJson.mydivLeft + "px";
         //change version prompt if required
         var versionResult = window.prompt("Version:?",mfJson["mfVersion"]);
         mfJson["mfVersion"] = versionResult;
         document.getElementById("mfVersion").innerHTML = versionResult;
+        //save version back to local storage object
         localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
 
         //load all nodes
@@ -302,14 +320,89 @@ function importLocalStorage(e){
         console.log("kEYS#=",n);
         console.log("ARRAY#=",keysLocalStorageArray);
         for (var i=0;i < n;i++){
+            var tempString = keysLocalStorageArray[i];
+      
+            if (tempString.startsWith("div") === true){
+            //DEBUG:::DIV
+          
+                //check if its a parent or chuild node of document.body
+                var tempNode = tempString.replace("div-","");
+                console.log("changed to:::",tempNode);
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
+                console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
+            
+                //Setup the first div and associated child divs and nodes
+                if (lineJsonTempObj["nodeType"] == "parent"){
+                    console.log("This node is a Parent not a child!");
+                    //create DIV
+                
+                    var nodeDivTemp = document.createElement("DIV");
+                    var divNameId = tempString;
+                    nodeDivTemp.setAttribute("id",divNameId);
+                    //append to document
+                    document.body.appendChild(nodeDivTemp);
+                    retrieveSavedNodeFromLocalStorage(tempNode,result)
+                    var tempNodeSet = document.getElementById(tempNode);
+                    nodeDivTemp.appendChild(tempNodeSet);
+                    //Load the child div names and create relative to parent
+                    //load all nodes
+                    var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                    var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
+                    var o = Object.keys(lineJsonTempObj).length;
+                    console.log("var o:::",o);
+                    var keysLineTempArray = Object.keys(lineJsonTempObj);
+                    console.log("var keysLineTempArray:::",keysLineTempArray);
+                    for (var j=0;j < o;j++){
+                        var tempDivString = keysLineTempArray[j];
+                        var nodeDivTempChild = document.createElement("DIV");
+                        var divNameId = tempDivString;
+                        nodeDivTempChild.setAttribute("id",divNameId);
+                        //append to document
+                        nodeDivTemp.appendChild(nodeDivTempChild);
 
-        let tempString = keysLocalStorageArray[i];
-        //iterate over and only update nodes
-        if (tempString.search("node") != -1){
-            console.log("node name in temstring",tempString)
-            retrieveSavedNodeFromLocalStorage(tempString,result)
+                        //get the child node
+                        var tempChildNode = divNameId.replace("div-","");
+                        retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                        var tempNodeChildSet = document.getElementById(tempChildNode);
+                        nodeDivTempChild.appendChild(tempNodeChildSet);
+
+                    }
+                }
+                else {
+                    //setup the rest of the divs and nodes after parent above
+                    //load all nodes
+                    var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                    console.log("DEBUG CHILD:::",mfJsonTempObj);
+                    var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
+                    console.log("DEBUG CHILD:::",lineJsonTempObj);
+                    var p = Object.keys(lineJsonTempObj).length;
+                    console.log("var p:::",p);
+                    var keysLineTempArray = Object.keys(lineJsonTempObj);
+                    console.log("var keysLineTempArray:::",keysLineTempArray);
+                    for (var k=0;k < p;k++){
+                        //try {
+                        var tempDivString = keysLineTempArray[k];
+                        console.log("PARENT DIV ID:::",tempString);
+                        //this parent div was created as above
+                        var divNameParent = document.getElementById(tempString);
+                        
+                        var nodeDivTempChild = document.createElement("DIV");
+                        var divNameChildId = tempDivString;
+                        
+                        nodeDivTempChild.setAttribute("id",divNameChildId);
+                        //append to document
+                        divNameParent.appendChild(nodeDivTempChild);
+
+                        //get the child node
+                        var tempChildNode = divNameChildId.replace("div-","");
+                        retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                        var tempNodeChildSet = document.getElementById(tempChildNode);
+                        nodeDivTempChild.appendChild(tempNodeChildSet); 
+                    }
+                }   
+            }
         }
-    }
     });
 }
 
@@ -592,10 +685,17 @@ function createForm(e) {
             var currentNode = document.getElementById(nodeSearch);
             currentNode.style.borderColor = borderColorDropDown.value;
             //console.log("color value:::",bgColorDropDown.value);
+            try {
+                //DEBUG SVG line color change
+                var tempLineNodeId = "line-"+nodeSearch;
+                var tempLineNode = document.getElementById(tempLineNodeId);
             
-            //save to localstorage 
-
-
+                tempLineNode.setAttribute("stroke", borderColorDropDown.value);
+            }
+            catch {
+                console.log("ERROR:::Unable to update line color - must be a Parent Node.")   
+            }
+            //save to localstorage
             //Store each node as a subset of the localstorage and stringify all of it.
             //load storage vars so can append
             var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
@@ -623,11 +723,48 @@ function deleteNode(nodeSearch){
 
         //DEBUG - Delete line from localstorage
         //load storage vars so can append
-        var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-        //delete object property
-        delete mfJson[nodeSearch];
-        //store nodename key
-        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+        var mfJsonObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+        //console.log("DEBUG:::mfJsonObj",mfJsonObj);
+        //try{
+        //    delete mfJsonObj[nodeSearch];
+        //}
+        //catch{console.log("No node or failed to delete.");}
+
+        
+            var tempLineObj = mfJsonObj[nodeSearch];
+            var tempDiv = "div-"+ nodeSearch;
+              
+            for (var key in mfJsonObj) {
+                console.log("KEY:::",key);
+                var value = mfJsonObj[key];
+                
+                console.log("VALUE:::",value);
+                
+                if (key.startsWith("div-") === true){
+                    var valueObj = JSON.parse(value);
+                    console.log("VALUEOBJ:::",valueObj);
+                
+                    if (typeof valueObj === 'object') {
+                        for (var subKey in valueObj) {
+                            var subValue = valueObj[subKey];
+                            if (subValue === tempDiv) {
+                                console.log('SUB Property=' + subKey + ' value=' + subValue);
+                                delete valueObj[subKey];
+                                mfJsonObj[key] = JSON.stringify(valueObj);
+                            }
+                        }
+                    }
+                
+                    if (value === tempDiv) {
+                        console.log('property=' + key + ' value=' + value);
+                    }
+                }
+                
+            }
+            //delete node that was searched - above the DIVS are also cleaned up.   
+            delete mfJsonObj[nodeSearch];
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJsonObj));
 
         //delete live ID's
         //DOM
@@ -648,16 +785,12 @@ function deleteNode(nodeSearch){
     }
     else{
         console.log("Node was not Deleted:::",nodeSearch);
-
-       
-    }
-
-    
+    }    
 }
 
-
-
 function createChildNode(e){
+
+    console.log("target id at begin of createChildNode",e.target.id);
     //get info about existing parent node
     let currentParentNode = document.getElementById("formNodeId");
     console.log("current parent node",currentParentNode);
@@ -675,40 +808,42 @@ function createChildNode(e){
     let lineStartY = parentNodeCoords.top + (parentNodeCoords.height/2);
 
     console.log("lineStartX/Y",lineStartX,":::",lineStartY);
-
-
-
+    
+    //Get upstream DIV
+    var parentDivId = "div-"+currentParentNodeId;
+    var parentDiv = document.getElementById(parentDivId);
+    console.log("parentDiv:::",parentDiv);
     //ID created with date as unique hash  
      var childNodeName = "node-"+Date.now();
-    console.log("New node created:"+childNodeName);
     
-    
-    
+    //create child DIV
+    //DEBUG:::DIV
+    var childDiv = document.createElement("DIV");
+    var childDivNameId = "div-"+ childNodeName;
+    console.log("childDivNameId:::",childDivNameId);
+    childDiv.setAttribute("id",childDivNameId);
+    console.log("childDiv:::",childDiv);
+
+    //append to document
+    parentDiv.appendChild(childDiv);
+
     //var x = document.createElement("INPUT");
     var x = document.createElement("TEXTAREA");
-    
-    
-    
-    
+        
     x.setAttribute("type", "text");
     x.setAttribute("id",childNodeName);
     x.setAttribute("class","defaultNode");
     x.style.position = "absolute";
     x.style.backgroundColor = "white";
     x.style.color = "black";
-    x.style.borderColor = "black";
-    
+    var nodeBorderColor = "black";
+    x.style.borderColor = nodeBorderColor;
     x.style.top = Math.floor(Math.random() * Math.floor(window.innerHeight - (window.innerHeight/3)))+"px";
     x.style.left = Math.floor(Math.random() * Math.floor(window.innerWidth - (window.innerWidth/3)))+"px";
-    
-    //x.style.top = window.height*(1/100)+"px";
-    //x.style.left = window.width*(1/100)+"px";
-    
-
     x.setAttribute("draggable","true");
 
-    //append to document
-    document.body.appendChild(x);
+    //append to childDiv document
+    childDiv.appendChild(x);
    
     //save to local storage
     var childNodeCoordsObj = x.getBoundingClientRect();
@@ -723,12 +858,30 @@ function createChildNode(e){
     
     //draw a canvas line 
     //drawLineCanvas(lineStartX,lineStartY,lineEndX,lineEndY);
-    drawLineSvg(lineStartX,lineStartY,lineEndX,lineEndY,childNodeNameLine);
+    drawLineSvg(lineStartX,lineStartY,lineEndX,lineEndY,nodeBorderColor,childNodeNameLine);
 
     //Store each node as a subset of the localstorage and stringify all of it.
     //load storage vars so can append
     var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
     
+    //DEBUG:::DIVS
+    //initialise temp object
+    console.log("mfJson:::",mfJson);
+    console.log('parentDivId:::',parentDivId);
+    try{
+        var tempDivParentObj = JSON.parse(mfJson[parentDivId]);
+        tempDivParentObj[childDivNameId] = childDivNameId;
+        var tempDivParentStringify = JSON.stringify(tempDivParentObj);
+        mfJson[parentDivId] = tempDivParentStringify;
+    }
+    catch {
+            //DEBUG:::DIV
+            //initialise temp object
+            var tempDivParentObj = {};    
+            tempDivParentObj[childDivNameId] = childDivNameId;
+            var tempDivParentStringify = JSON.stringify(tempDivParentObj);
+            mfJson[parentDivId] = tempDivParentStringify;
+    }
     //add the child coords
     ///var tempChildNodeObj = childNodeCoordsObj; 
     //initialise temp object
@@ -754,7 +907,7 @@ function createChildNode(e){
     tempChildNodeObj["nodeText"] = childNodeName;
     tempChildNodeObj["bgNodeColor"] = "white";
     tempChildNodeObj["fontNodeColor"] = "black";
-    tempChildNodeObj["borderNodeColor"] = "black";
+    tempChildNodeObj["borderNodeColor"] = nodeBorderColor;
     console.log("tempChildNodeObj",tempChildNodeObj);
     //make a string out of the child object
     var tempChildNodeString = JSON.stringify(tempChildNodeObj);
@@ -783,8 +936,8 @@ function createChildNode(e){
 }
 
 //draws a line from child to parent and stores it in local storage
-function drawLineSvg(xStart,yStart,xEnd,yEnd,childNodeNameLine){
-    //catch cords emoty or undefined - DEBUG for now becuase cannot find the issue
+function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine){
+    //catch cords empty or undefined - DEBUG for now becuase cannot find the issue
     if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || yEnd !== 'undefined' || childNodeNameLine !== 'undefined'){
 
     
@@ -819,8 +972,43 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,childNodeNameLine){
             newLine.setAttribute('y1',yStart);
             newLine.setAttribute('x2',xEnd);
             newLine.setAttribute('y2',yEnd);
-            newLine.setAttribute("stroke", "black")
+            newLine.setAttribute("stroke", nodeBorderColor);
             svgElem.append(newLine);
+/*
+        //DEBUG:::Circle
+        //side A
+        var circleMenuSvgId = "circle-"+childNodeNameLine;
+
+        var newCircleA = document.createElementNS(xmlns,'circle');
+        newCircleA.setAttribute('id',circleMenuSvgId);
+        newCircleA.setAttribute('cx',xStart);
+        newCircleA.setAttribute('cy',yStart);
+        newCircleA.setAttribute('r','10');
+        newCircleA.setAttribute('stroke-width','1');
+        newCircleA.setAttribute("stroke", "black");
+        newCircleA.setAttribute("fill", "none");
+
+        svgElem.append(newCircleA);
+
+        //DEBUG:::Circle
+        //Side B
+
+        var newCircleB = document.createElementNS(xmlns,'circle');
+        newCircleB.setAttribute('id',circleMenuSvgId);
+        newCircleB.setAttribute('cx',xEnd);
+        newCircleB.setAttribute('cy',yEnd);
+        newCircleB.setAttribute('r','10');
+        newCircleB.setAttribute('stroke-width','1');
+        newCircleB.setAttribute("stroke", "black");
+        newCircleB.setAttribute("fill", "none");
+
+        svgElem.append(newCircleB);
+
+        
+        
+        
+            //<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+            */
     }
 }
 
@@ -858,8 +1046,46 @@ if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || 
         existingLine.setAttribute('y1',yStart);
         existingLine.setAttribute('x2',xEnd);
         existingLine.setAttribute('y2',yEnd);
-        existingLine.setAttribute("stroke", "black")
+        //existingLine.setAttribute("stroke", "black")
         svgElem.append(existingLine);
+/*
+         //DEBUG:::Circle
+        //side A
+        var circleMenuSvgId = "circle-"+childNodeNameLine;
+
+var newCircleA = document.createElementNS(xmlns,'circle');
+newCircleA.setAttribute('id',circleMenuSvgId);
+newCircleA.setAttribute('cx',xStart);
+newCircleA.setAttribute('cy',yStart);
+newCircleA.setAttribute('r','10');
+newCircleA.setAttribute('stroke-width','1');
+newCircleA.setAttribute("stroke", "black");
+newCircleA.setAttribute("fill", "none");
+
+svgElem.append(newCircleA);
+
+//DEBUG:::Circle
+//Side B
+
+var newCircleB = document.createElementNS(xmlns,'circle');
+newCircleB.setAttribute('id',circleMenuSvgId);
+newCircleB.setAttribute('cx',xEnd);
+newCircleB.setAttribute('cy',yEnd);
+newCircleB.setAttribute('r','10');
+newCircleB.setAttribute('stroke-width','1');
+newCircleB.setAttribute("stroke", "black");
+newCircleB.setAttribute("fill", "none");
+
+svgElem.append(newCircleB);
+
+
+
+
+    //<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+
+*/
+
+
 }
 }
 
@@ -887,7 +1113,7 @@ function deleteForm(e) {
     var x = document.getElementById("mfHtmlTitle");
     var mfHtmlTitle = localStorageKeyName;
     //create version control
-    var mfVersion = window.prompt("Version:?","Version: 2021Jan01-1.0");
+    var mfVersion = window.prompt("Version:?","1.0");
     
     document.getElementById("mfVersion").innerHTML = mfVersion;
     //save the html title
@@ -937,16 +1163,96 @@ function loadLocalStorage(e){
     console.log("ARRAY#=",keysLocalStorageArray);
     for (var i=0;i < n;i++){
 
-      let tempString = keysLocalStorageArray[i];
-      //iterate over and only update nodes
-      if (tempString.search("node") != -1){
-        //console.log("Node:",tempString);
-        
-        retrieveSavedNodeFromLocalStorage(tempString,result)
-      }
-    }
-}    
+        var tempString = keysLocalStorageArray[i];
+      
+        if (tempString.startsWith("div") === true){
+          //DEBUG:::DIV
+            try{
+                //check if its a parent or chuild node of document.body
+                var tempNode = tempString.replace("div-","");
+                console.log("changed to:::",tempNode);
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
+                console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
+            }
+            catch {console.log("Something went wrong or div was empty");}
 
+            //Setup the first div and associated child divs and nodes
+            if (lineJsonTempObj["nodeType"] == "parent"){
+                console.log("This node is a Parent not a child!");
+                //create DIV
+                
+                var nodeDivTemp = document.createElement("DIV");
+                var divNameId = tempString;
+                nodeDivTemp.setAttribute("id",divNameId);
+                //append to document
+                document.body.appendChild(nodeDivTemp);
+                retrieveSavedNodeFromLocalStorage(tempNode,result)
+                var tempNodeSet = document.getElementById(tempNode);
+                nodeDivTemp.appendChild(tempNodeSet);
+                //Load the child div names and create relative to parent
+                //load all nodes
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
+                var o = Object.keys(lineJsonTempObj).length;
+                console.log("var o:::",o);
+                var keysLineTempArray = Object.keys(lineJsonTempObj);
+                console.log("var keysLineTempArray:::",keysLineTempArray);
+                for (var j=0;j < o;j++){
+                    var tempDivString = keysLineTempArray[j];
+                    
+                    var nodeDivTempChild = document.createElement("DIV");
+                    var divNameId = tempDivString;
+                    
+                    nodeDivTempChild.setAttribute("id",divNameId);
+                    //append to document
+                    nodeDivTemp.appendChild(nodeDivTempChild);
+
+                    //get the child node
+                    var tempChildNode = divNameId.replace("div-","");
+                    retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                    var tempNodeChildSet = document.getElementById(tempChildNode);
+                    nodeDivTempChild.appendChild(tempNodeChildSet);
+
+                }
+            }
+            else {
+                //setup the rest of the divs and nodes after parent above
+                //load all nodes
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                console.log("DEBUG CHILD:::",mfJsonTempObj);
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
+                console.log("DEBUG CHILD:::",lineJsonTempObj);
+                var p = Object.keys(lineJsonTempObj).length;
+                console.log("var p:::",p);
+                var keysLineTempArray = Object.keys(lineJsonTempObj);
+                console.log("var keysLineTempArray:::",keysLineTempArray);
+                for (var k=0;k < p;k++){
+                    //try {
+                        var tempDivString = keysLineTempArray[k];
+                        console.log("PARENT DIV ID:::",tempString);
+                        //this parent div was created as above
+                        var divNameParent = document.getElementById(tempString);
+                        
+                        var nodeDivTempChild = document.createElement("DIV");
+                        var divNameChildId = tempDivString;
+                        
+                        nodeDivTempChild.setAttribute("id",divNameChildId);
+                        //append to document
+                        divNameParent.appendChild(nodeDivTempChild);
+
+                        //get the child node
+                        var tempChildNode = divNameChildId.replace("div-","");
+                        retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                        var tempNodeChildSet = document.getElementById(tempChildNode);
+                        nodeDivTempChild.appendChild(tempNodeChildSet);
+                    //}
+                    //catch {console.log("Something went wrong");}    
+                }
+            }    
+        }
+    }    
+}
 //load node and associated text
 function retrieveSavedNodeFromLocalStorage(nodeID,result){
     //console.log("Node Name sent=",nodeID);
@@ -970,10 +1276,14 @@ function retrieveSavedNodeFromLocalStorage(nodeID,result){
     x.style.position = "absolute";
     x.style.backgroundColor = nodeNameObj["bgNodeColor"];
     x.style.color = nodeNameObj["fontNodeColor"];
-    x.style.borderColor = nodeNameObj["borderNodeColor"];
+
+    var nodeBorderColor = nodeNameObj["borderNodeColor"];
+    x.style.borderColor = nodeBorderColor;
     
     x.setAttribute("draggable","true");
     x.value = nodeNameObj["nodeText"];
+    //add text as well to TEXTAREA node in between brackets 
+    x.textContent = nodeNameObj["nodeText"];
     //add the value attribute for offline file saving as well
     x.setAttribute("value",nodeNameObj["nodeText"]); 
     //append to document
@@ -997,7 +1307,7 @@ function retrieveSavedNodeFromLocalStorage(nodeID,result){
         var childNodeNameLine = "line-"+ nodeID;
 
         //draw the lines between child and parents
-        drawLineSvg(xStart,yStart,xEnd,yEnd,childNodeNameLine);
+        drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine);
     }
 }    
     
@@ -1010,7 +1320,12 @@ function createNode(e){
     var nodeName = "node-"+Date.now();
     //console.log("New node created:"+nodeName);
     
-    //var x = document.createElement("INPUT");
+    //DEBUG:::DIV
+    var nodeDiv = document.createElement("DIV");
+    var divName = "div-"+ nodeName;
+    nodeDiv.setAttribute("id",divName);
+    //append to document
+    document.body.appendChild(nodeDiv);
     
     var x = document.createElement("TEXTAREA");
     
@@ -1025,7 +1340,7 @@ function createNode(e){
     x.setAttribute("draggable","true");
 
     //append to document
-    document.body.appendChild(x);
+    nodeDiv.appendChild(x);
    
     //save to local storage
     var nodeCoordsObj = x.getBoundingClientRect();
@@ -1039,7 +1354,13 @@ function createNode(e){
     //work out line start coords from the parent coords -  //required if child nodes move and they will need the upstream coords
     let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
     let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
-
+    //DEBUG:::DIV
+    //initialise temp object
+    var tempDivObj = {};
+    //tempDivObj[nodeName] = nodeName;
+    var tempDivStringify = JSON.stringify(tempDivObj);
+    mfJson[divName] = tempDivStringify;
+    
 
     //add the parent coords 
     //initialise temp object
@@ -1101,6 +1422,8 @@ function createNodeText(e){
       
             var inputId = document.getElementById(e.target.id);
             var input = inputId.value;
+            //add text as well to TEXTAREA node in between brackets 
+            inputId.text = input;
             inputId.setAttribute("value",input);  
             console.log(e.target.id,":::",input);
 
