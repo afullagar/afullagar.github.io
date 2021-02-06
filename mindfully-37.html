@@ -1,0 +1,1970 @@
+<html lang="en">
+<!--Version: v25 2021Jan20-1.25
+- add load button (load an existing MF MM.)
+- add child button create and add value field to input elements
+- add lines between child and parent
+- add realign option if node breaks away - have not figured out why but I have configured a way to hover and drop and pickup/reconnect disjointed nodes - v16
+- add save option to save for import export into web app from /to localstorage - v17
+- add name to restore of the json file - currently in v17 set to undefined.
+- add modal popup on hover
+- add background color to nodes - v21
+- add font and border color to nodes - v22
+- add touch controls - v24/v25
+- add delete option
+- add fix for firefox bug - drag and move/drop - v37
+-->
+<head>
+    <meta Content-Type="text/html" charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title id="mfHtmlTitle">MindFully Maps</title>
+
+<style>
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    position:absolute;
+    background-color: rgb(240, 240, 240);
+    }
+
+.defaultButton {
+    border-radius: 10px; 
+    color:inherit; 
+    font-size: 100%;
+    background-color: rgb(241, 239, 239); 
+    padding:0px;
+    border: 1px solid black;
+    margin: 0px;
+    font-weight: 400;
+    }
+
+.defaultNode {
+    /*border-radius: 10px;*/
+    margin: 0px;
+    padding:0px;
+    /*this setting allows textarea to expand and contract.*/
+    resize:both;
+    text-align: left;
+    border: 1px solid black;
+    border-radius: 1px;
+    border-top-right-radius: 5% 10%;
+    border-bottom-left-radius: 5% 10%;
+    border-top-left-radius: 5% 10%;
+    border-bottom-right-radius: 5% 10%;
+    
+    opacity: 1.0;
+    font-size:10px; 
+}
+
+</style>
+</head>
+
+<body id="mainPage">
+<!--SVG elements get placed here on creation-->
+<div id="svgParent"></div>
+<div id="dlExport"></div>
+
+<!--version-->
+<p id="mfVersion">1.0</p>
+<p id="mfDateTimeLastSave"></p> 
+<button type="button" class="defaultButton" id="loadLocalStorage">Load from LocalStorage</button>
+<button type="button" class="defaultButton" id="createLocalStorage">Create to LocalStorage</button>
+<button type="button" class="defaultButton" id="exportLocalStorage">Export LocalStorage to File</button>
+<label for="importLocalStorage" class="defaultButton">Import Upload to LocalStorage</label> 
+<input type="file" accept="text/json" id="importLocalStorage" style="display: none;"></input>
+<button type="button" class="defaultButton" id="addNode">Create Node</button>
+<button type="button" class="defaultButton" id="checkDateTimeId">Check JSON File Date/Time</button>
+
+<script>
+//Use Strict
+'use strict';
+var startX = 0;
+var startY = 0;
+var deviationX = 0;
+var deviationY = 0;
+//Firefox Bug - e.clientX/Y always zero
+var globalClientX = 0;
+var globalClientY = 0;
+var active = false;
+//continuous write to file versioning control
+var versionControlBool = false;
+
+//prompt use and change variable
+versionControlBool = confirm("Do you want realtime version control to a file?");
+
+var layoutViewPortX = document.documentElement.clientWidth;
+console.log("layout viewport X:::",layoutViewPortX);
+var layoutViewPortY = document.documentElement.clientHeight;
+console.log("layout viewport Y:::",layoutViewPortY);
+
+//log browser type
+console.log(navigator.userAgent);
+var browserReport = navigator.userAgent.toLowerCase();
+//console.log(browserReport);
+
+if (browserReport.search("firefox") != -1){
+    console.log("Browser appears to be Firefox. ClientX/Y and PageX/Y is always zero so use global var!");
+    document.addEventListener("dragover", (e)=>{
+        globalClientX = e.clientX;
+        globalClientY = e.clientY;
+    });
+}
+else if (browserReport.search("edg") != -1){
+    console.log("Browser appears to be Edge. ClientX/Y and PageX/Y is shoudl work ok!");
+}
+else if (browserReport.search("chrome") != -1){
+    console.log("Browser appears to be Chrome. ClientX/Y and PageX/Y is shoudl work ok!");
+}
+
+
+//set default canvas size
+//var canvas = document.getElementById("myCanvas");
+//var ctx = canvas.getContext("2d")
+//resize canvas
+//ctx.canvas.width  = window.innerWidth - 10;
+//ctx.canvas.height = window.innerHeight - 100;
+
+
+  //add a node click  
+  document.getElementById("addNode").addEventListener("click", createNode);
+  //add a node click  
+  document.getElementById("checkDateTimeId").addEventListener("click", checkFileDateTime);
+  //load from local storage click
+  document.getElementById("loadLocalStorage").addEventListener("click", loadLocalStorage);
+  //add a local storage click
+  document.getElementById("createLocalStorage").addEventListener("click", createLocalStorage);
+  //export a local storage click
+  document.getElementById("exportLocalStorage").addEventListener("click", exportLocalStorage);
+  //export a local storage click
+  document.getElementById("importLocalStorage").addEventListener("change", importLocalStorage);  
+
+  var localStorageKeyName; 
+
+  //add eventlistner for clicking into a node
+  document.addEventListener("click", createNodeText);
+
+  document.addEventListener("dragstart", createMoveNode);
+  
+  //hover modal test
+  document.addEventListener("contextmenu",createForm);
+
+//TOUCH EVENTS//
+
+//for touch
+document.addEventListener('touchstart', createNodeTouchEvent, {passive: false});
+//document.addEventListener("touchmove", createMoveNode);
+//
+
+function checkFileDateTime(e){
+    var getDateTimeString = window.prompt("Enter date time string on te end of the filename", "String?");
+    console.log(getDateTimeString);
+    var getDateTimeInteger = parseInt(getDateTimeString);
+    console.log(getDateTimeInteger);
+    let currentDateTimeString = Date.now();
+    console.log("current date-time",currentDateTimeString);
+    //debug and show date and time
+    var fileDateTime = new Date(getDateTimeInteger);
+    console.log(fileDateTime);
+    //debug date and time
+    var date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
+    var time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
+    //debug - show date and time
+    console.log(date+" "+time);
+    alert(fileDateTime);
+
+}
+
+//DEBUG Touch Events
+function createNodeTouchEvent(event){
+    // event.preventDefault();
+    console.log(event);
+    //create a search term
+    var searchItem = event.target.id;
+    //check where the touch start event occurred
+    //load local storage
+    if (event.target.id == "loadLocalStorage"){
+        loadLocalStorage();
+    }
+
+    //create local storage    
+    if (event.target.id == "createLocalStorage"){
+        createLocalStorage();
+    }
+
+    //create local storage    
+    if (event.target.id == "exportLocalStorage"){
+        exportLocalStorage();
+        //click link after its created
+        if (event.target.id == "downloadLink"){
+            
+        }
+    }
+
+    //create local storage    
+    if (event.target.id == "createLocalStorage"){
+        createLocalStorage();
+    }
+
+    //create local storage    
+    if (event.target.id == "addNode"){
+        createNode();
+    }
+
+    if (searchItem.search("node") != -1){
+        //document.addEventListener("touchmove", createTouchMoveNode);
+        createTouchMoveNode();
+    }
+
+}
+
+
+ function exportLocalStorage(e){
+    //Debug and log event messages from change click
+    console.log(e);
+    console.log(localStorageKeyName);
+    //get localstorage key and associated JSON strings
+    var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+    //turn into a string
+    var mfJsonString = JSON.stringify(mfJson);
+    //base64 encode it for saving toa  file
+    var mfJsonStringBase64 = btoa(mfJsonString);
+    //create a link ready for download
+    var downloadLink = document.createElement("a");
+    //get the current date since epoch
+    let currentDateTimeString = Date.now();
+    //debug and show date and time
+    let fileDateTime = new Date(currentDateTimeString);
+
+    //debug date and time
+    let date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
+    let time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
+    //debug - show date and time
+    console.log(date+" "+time);
+
+    //downloadLink.style.postion = "absolute";
+    //download method and set name
+    downloadLink.download = localStorageKeyName+"-"+currentDateTimeString+".json";
+    //downloadLink.target="_blank";
+    //downloadLink.style.left = (200)+"px";
+    //downloadLink.style.top = (200)+"px";//set where the download link will appear
+    downloadLink.setAttribute("id","downloadLink");
+    //text displayed
+    downloadLink.text = "Download and export "+localStorageKeyName+"-"+currentDateTimeString+".json to file";
+    //trick to create a download file
+    downloadLink.href = "data:text/json,"+mfJsonStringBase64;
+    //var dlExport = document.getElementById("dlExport");
+    //dlExport.appendChild(downloadLink);
+    //console.log(browser.downloads.showDefaultFolder());
+    //DEBUG auto click
+    downloadLink.click();
+
+    //make link disappear after being clicked
+    //let killLink = document.getElementById("downloadLink");
+    //killLink.remove();
+    //killLink.addEventListener("click", (e) => {
+    //    console.log("removed:",e.target.id);
+    //    killLink.remove();
+    //});
+ }
+
+ //function to import a MF into browser and LocalStorage
+function importLocalStorage(e){
+    //button to choose file and load json file
+    let fileChosen = document.getElementById("importLocalStorage");
+    //create a new reader object to load file and read it
+    let reader = new FileReader();
+    //console.log(fileChosen.files[0]);
+    //console.log("filechosen",fileChosen.files[0].name);
+    console.log("filechosen",fileChosen.files[0].lastModifiedDate);
+    var lastModifiedDateTimeFileString = fileChosen.files[0].lastModifiedDate;
+
+    var lastModifiedDateTime = document.getElementById("mfDateTimeLastSave");
+    lastModifiedDateTime.innerHTML = "Imported File Last Modified Date:::"+lastModifiedDateTimeFileString;
+    
+    reader.readAsText(fileChosen.files[0]);
+    reader.addEventListener('load', (e) => {
+        if (e.type === "load") {
+            //get content of file that is base64 encoded and decode
+            var mfJsonStringBase64 = reader.result;
+            //Debug - base64 file
+            //decode file from base64
+            var mfJsonString = atob(mfJsonStringBase64);
+            //create object to extract version
+            var mfJsonObj = JSON.parse(mfJsonString);
+            //set the key name from original obj
+            var mfHtmlTitle = mfJsonObj["mfHtmlTitle"];
+            //Set and Save to Local Storage
+            localStorage.setItem(mfHtmlTitle,mfJsonString);
+        }
+  
+        var localStorageKeyName = mfHtmlTitle;
+        var x = document.getElementById("mfHtmlTitle");
+        var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+        x.innerHTML = mfJson["mfHtmlTitle"];
+        var result = mfJson["mfHtmlTitle"];
+        document.getElementById("mfVersion").innerHTML = mfJson["mfVersion"];
+    
+        console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
+    
+        //change version prompt if required
+        var versionResult = window.prompt("Version:?",mfJson["mfVersion"]);
+        mfJson["mfVersion"] = versionResult;
+        document.getElementById("mfVersion").innerHTML = versionResult;
+        //save version back to local storage object
+        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+
+        //load all nodes
+        var n = Object.keys(mfJson).length;
+        var keysLocalStorageArray = Object.keys(mfJson);
+        //DEBUG
+        console.log("kEYS#=",n);
+        console.log("ARRAY#=",keysLocalStorageArray);
+        for (var i=0;i < n;i++){
+            var tempString = keysLocalStorageArray[i];
+      
+            if (tempString.startsWith("div") === true){
+            //DEBUG:::DIV
+          
+                //check if its a parent or chuild node of document.body
+                var tempNode = tempString.replace("div-","");
+                console.log("changed to:::",tempNode);
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
+                console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
+            
+                //Setup the first div and associated child divs and nodes
+                if (lineJsonTempObj["nodeType"] == "parent"){
+                    console.log("This node is a Parent not a child!");
+                    //create DIV
+                
+                    var nodeDivTemp = document.createElement("DIV");
+                    var divNameId = tempString;
+                    nodeDivTemp.setAttribute("id",divNameId);
+                    //append to document
+                    document.body.appendChild(nodeDivTemp);
+                    retrieveSavedNodeFromLocalStorage(tempNode,result)
+                    var tempNodeSet = document.getElementById(tempNode);
+                    nodeDivTemp.appendChild(tempNodeSet);
+                    //Load the child div names and create relative to parent
+                    //load all nodes
+                    var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                    var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
+                    var o = Object.keys(lineJsonTempObj).length;
+                    console.log("var o:::",o);
+                    var keysLineTempArray = Object.keys(lineJsonTempObj);
+                    console.log("var keysLineTempArray:::",keysLineTempArray);
+                    for (var j=0;j < o;j++){
+                        var tempDivString = keysLineTempArray[j];
+                        var nodeDivTempChild = document.createElement("DIV");
+                        var divNameId = tempDivString;
+                        nodeDivTempChild.setAttribute("id",divNameId);
+                        //append to document
+                        nodeDivTemp.appendChild(nodeDivTempChild);
+
+                        //get the child node
+                        var tempChildNode = divNameId.replace("div-","");
+                        retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                        var tempNodeChildSet = document.getElementById(tempChildNode);
+                        nodeDivTempChild.appendChild(tempNodeChildSet);
+
+                    }
+                }
+                else {
+                    //setup the rest of the divs and nodes after parent above
+                    //load all nodes
+                    var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                    console.log("DEBUG CHILD:::",mfJsonTempObj);
+                    var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
+                    console.log("DEBUG CHILD:::",lineJsonTempObj);
+                    var p = Object.keys(lineJsonTempObj).length;
+                    console.log("var p:::",p);
+                    var keysLineTempArray = Object.keys(lineJsonTempObj);
+                    console.log("var keysLineTempArray:::",keysLineTempArray);
+                    for (var k=0;k < p;k++){
+                        //try {
+                        var tempDivString = keysLineTempArray[k];
+                        console.log("PARENT DIV ID:::",tempString);
+                        //this parent div was created as above
+                        var divNameParent = document.getElementById(tempString);
+                        
+                        var nodeDivTempChild = document.createElement("DIV");
+                        var divNameChildId = tempDivString;
+                        
+                        nodeDivTempChild.setAttribute("id",divNameChildId);
+                        //append to document
+                        divNameParent.appendChild(nodeDivTempChild);
+
+                        //get the child node
+                        var tempChildNode = divNameChildId.replace("div-","");
+                        retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                        var tempNodeChildSet = document.getElementById(tempChildNode);
+                        nodeDivTempChild.appendChild(tempNodeChildSet); 
+                    }
+                }   
+            }
+        }
+    });
+}
+
+function createForm(e) { 
+   e.preventDefault();
+  var nodeSearch = e.target.id;
+    //console.log("createForm Search:::",nodeSearch);
+    if (nodeSearch.search("node") != -1){
+      //check if form exists - if so delete
+      let formDom = document.getElementById("formDivContainer");
+      if (formDom !== null){
+          while (formDom.firstChild) {
+              formDom.removeChild(formDom.firstChild);
+          }
+
+          var x = document.getElementById("formDivContainer");
+          ///console.log("Form=",x);
+          x.remove();
+      }
+    
+        var br = document.createElement("br"); 
+        // Create a form synamically 
+        var form = document.createElement("form"); 
+        form.setAttribute("id", "formDivContainer"); 
+        
+        form.style.position = "absolute";
+        form.style.backgroundColor = "lightgrey";
+        form.style.borderStyle = "none";
+        form.style.width = 190 +"px";
+        //form.style.left = 200 +"px";
+        ///console.log(e);
+        // Create an input element for nodeid 
+        var formNodeId = document.createElement("input");
+        formNodeId.setAttribute("id", "formNodeId");  
+        formNodeId.setAttribute("type", "text"); 
+        formNodeId.setAttribute("name", "formNodeId"); 
+        formNodeId.setAttribute("placeholder", e.target.id); 
+        formNodeId.setAttribute("value", e.target.id); 
+        
+
+        //formNodeId.style.position = "relative";
+        formNodeId.style.backgroundColor = "lightgrey";
+        //formNodeId.style.top = (e.clientY+20) +"px";
+        //formNodeId.style.left = (e.clientX+20) +"px";
+        
+        // Append the full name input to the form 
+        form.appendChild(formNodeId);  
+        
+        //get node id text value
+        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::e.target.id.value:::",e.target.id);
+        var formNodeTextId = document.getElementById(e.target.id);
+        var formNodeTextValue = formNodeTextId.value;
+        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::formNodeTextValue:::",formNodeTextValue);
+      
+        // Create an input element for password 
+        var formNodeText = document.createElement("input");
+        formNodeText.setAttribute("id", "formNodeText");  
+        formNodeText.setAttribute("type", "text"); 
+        formNodeText.setAttribute("name", "formNodeText"); 
+        formNodeText.setAttribute("placeholder", formNodeTextValue); 
+        
+        //formNodeText.style.position = "relative";
+        formNodeText.style.backgroundColor = "lightgrey";
+        //formNodeText.style.top = e.clientY +"px";
+        //formNodeText.style.left = e.clientX +"px";
+
+        // Append the node text 
+        form.appendChild(formNodeText);  
+        
+
+        // create a submit button 
+        var s = document.createElement("input"); 
+        s.setAttribute("id", "submitClose"); 
+        s.setAttribute("type", "button"); 
+        s.setAttribute("value", "Close"); 
+        
+
+        //s.style.position = "absolute";
+        s.style.backgroundColor = "green";
+        //s.style.top = e.clientY +"px";
+        //s.style.left = e.clientX +"px";
+
+        // Append the submit button to the form 
+        form.appendChild(s); 
+        form.appendChild(br.cloneNode());  
+
+        //create a add child node button (and a line)
+        // create a submit button 
+        var createChildNodeButton = document.createElement("input"); 
+        createChildNodeButton.setAttribute("id", "createChildNodeButton"); 
+        createChildNodeButton.setAttribute("type", "button"); 
+        createChildNodeButton.setAttribute("value", "Create Child Node"); 
+        
+        //createChildNodeButton.style.position = "relative";
+        createChildNodeButton.style.backgroundColor = "yellow";
+        //createChildNodeButton.style.top = e.clientY +"px";
+        //createChildNodeButton.style.left = e.clientX +"px";
+
+            
+        // Inserting a line break 
+        form.appendChild(br.cloneNode());  
+
+        // Append the Password to the form 
+        form.appendChild(formNodeText);  
+        form.appendChild(br.cloneNode());  
+            
+        
+        // Append the submit button to the form 
+        form.appendChild(createChildNodeButton);  
+
+        //DEBUG///////////////////////////////////////////////
+        form.appendChild(br.cloneNode()); 
+        var bgColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','green','lightblue','blue','orange','pink','brown'];
+        var fontColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','green','lightblue','blue','orange','pink','brown'];
+        var borderColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','green','lightblue','blue','orange','pink','brown'];
+        
+        //create background css id
+        var bgColorNodeId = "bgcolor-"+nodeSearch;
+        //create background css id
+        var fontColorNodeId = "fontcolor-"+nodeSearch;
+        //create background css id
+        var borderColorNodeId = "bordercolor-"+nodeSearch;
+        
+
+        //background color select statement - simple version - no rgb
+        var selectBgColor = document.createElement('select');
+        selectBgColor.setAttribute("name",bgColorNodeId);
+        selectBgColor.setAttribute("id",bgColorNodeId);
+
+        //font color select statement - simple version - no rgb
+        var selectFontColor = document.createElement('select');
+        selectFontColor.setAttribute("name",fontColorNodeId);
+        selectFontColor.setAttribute("id",fontColorNodeId);
+
+        //background color select statement - simple version - no rgb
+        var selectBorderColor = document.createElement('select');
+        selectBorderColor.setAttribute("name",borderColorNodeId);
+        selectBorderColor.setAttribute("id",borderColorNodeId);
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
+
+        // Append to the form 
+        form.appendChild(selectBgColor);
+        form.appendChild(br.cloneNode()); 
+        
+        form.appendChild(selectFontColor);
+        form.appendChild(br.cloneNode()); 
+        
+        form.appendChild(selectBorderColor);
+        form.appendChild(br.cloneNode()); 
+        
+        //background colour choice//
+		var bgColorOption = document.createElement('option');
+		bgColorOption.value = "white";
+		bgColorOption.text = "Choose Background Color";
+		selectBgColor.appendChild(bgColorOption);
+        //Create color Choices
+        for (var i = 0; i < bgColorChoice.length; i++){
+	        var bgColorOption = document.createElement('option');
+		    bgColorOption.value = bgColorChoice[i];
+			bgColorOption.text = bgColorChoice[i];
+		    selectBgColor.appendChild(bgColorOption);
+		}
+
+        //node font colour choice//
+        var fontColorOption = document.createElement('option');
+		fontColorOption.value = "black";
+		fontColorOption.text = "Choose font Color";
+		selectFontColor.appendChild(fontColorOption);
+        //Create color Choices
+        for (var i = 0; i < fontColorChoice.length; i++){
+	        var fontColorOption = document.createElement('option');
+		    fontColorOption.value = fontColorChoice[i];
+			fontColorOption.text = fontColorChoice[i];
+		    selectFontColor.appendChild(fontColorOption);
+		}
+
+        //border colour choice//
+		var borderColorOption = document.createElement('option');
+		borderColorOption.value = "black";
+		borderColorOption.text = "Choose border Color";
+		selectBorderColor.appendChild(borderColorOption);
+        //Create color Choices
+        for (var i = 0; i < borderColorChoice.length; i++){
+	        var borderColorOption = document.createElement('option');
+		    borderColorOption.value = borderColorChoice[i];
+			borderColorOption.text = borderColorChoice[i];
+		    selectBorderColor.appendChild(borderColorOption);
+		}
+        form.appendChild(br.cloneNode()); 
+        //delete
+        // create a submit button 
+        var d = document.createElement("input"); 
+        d.setAttribute("id", "deleteNodeButton"); 
+        d.setAttribute("type", "button"); 
+        d.setAttribute("value", "Delete Node"); 
+        
+
+        //s.style.position = "absolute";
+        d.style.backgroundColor = "red";
+        //s.style.top = e.clientY +"px";
+        //s.style.left = e.clientX +"px";
+
+        // Append the submit button to the form 
+        form.appendChild(d); 
+        form.appendChild(br.cloneNode());  
+        //form.appendChild(selectBgColor);
+        form.appendChild(br.cloneNode()); 
+        document.getElementsByTagName("body")[0].appendChild(form); 
+        //document.getElementById("formDiv").appendChild("formDivContainer");
+        var f = document.getElementById("formDivContainer") 
+        f.style.postion = "relative";
+        f.style.left = (e.clientX+20)+"px";
+        f.style.top = (e.clientY+20)+"px";
+
+        document.getElementById("submitClose").addEventListener("click", deleteForm);
+        document.getElementById("createChildNodeButton").addEventListener("click", createChildNode); 
+        document.getElementById("deleteNodeButton").addEventListener("click",() =>{
+            
+                deleteNode(nodeSearch);
+                deleteForm();
+            
+        });
+        //Get color and change it for the node and save in localstorage
+        document.getElementById(bgColorNodeId).addEventListener("change", () => {
+            //load current node element and then change bg color
+            var bgColorDropDown = document.getElementById(bgColorNodeId);
+            var currentNode = document.getElementById(nodeSearch);
+            currentNode.style.backgroundColor = bgColorDropDown.value;
+            //console.log("color value:::",bgColorDropDown.value);
+            
+            //save to localstorage 
+
+
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
+            tempNodeSearchObj["bgNodeColor"] = bgColorDropDown.value;
+            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
+            //make a string out of the child object
+            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
+            //save coords string into node name line
+            mfJson[nodeSearch] = tempNodeSearchString;
+            
+            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+        });
+
+        //Get color and change it for the node and save in localstorage
+        document.getElementById(fontColorNodeId).addEventListener("change", () => {
+            //load current node element and then change bg color
+            var fontColorDropDown = document.getElementById(fontColorNodeId);
+            var currentNode = document.getElementById(nodeSearch);
+            currentNode.style.color = fontColorDropDown.value;
+            //console.log("color value:::",bgColorDropDown.value);
+            
+            //save to localstorage 
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
+            tempNodeSearchObj["fontNodeColor"] = fontColorDropDown.value;
+            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
+            //make a string out of the child object
+            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
+            //save coords string into node name line
+            mfJson[nodeSearch] = tempNodeSearchString;
+            
+            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+        });
+
+        //Get color and change it for the node and save in localstorage
+        document.getElementById(borderColorNodeId).addEventListener("change", () => {
+            //load current node element and then change bg color
+            var borderColorDropDown = document.getElementById(borderColorNodeId);
+            var currentNode = document.getElementById(nodeSearch);
+            currentNode.style.borderColor = borderColorDropDown.value;
+            //console.log("color value:::",bgColorDropDown.value);
+            try {
+                //DEBUG SVG line color change
+                var tempLineNodeId = "line-"+nodeSearch;
+                var tempLineNode = document.getElementById(tempLineNodeId);
+            
+                tempLineNode.setAttribute("stroke", borderColorDropDown.value);
+            }
+            catch {
+                console.log("ERROR:::Unable to update line color - must be a Parent Node.")   
+            }
+            //save to localstorage
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
+            tempNodeSearchObj["borderNodeColor"] = borderColorDropDown.value;
+            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
+            //make a string out of the child object
+            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
+            //save coords string into node name line
+            mfJson[nodeSearch] = tempNodeSearchString;
+            
+            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+        });
+    }
+            
+} 
+
+function deleteNode(nodeSearch){
+
+    var alertPrompt = confirm("Are you sure?");
+    //alert(alertPrompt);
+    if (alertPrompt === true){
+
+        //DEBUG - Delete line from localstorage
+        //load storage vars so can append
+        var mfJsonObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+        //console.log("DEBUG:::mfJsonObj",mfJsonObj);
+        //try{
+        //    delete mfJsonObj[nodeSearch];
+        //}
+        //catch{console.log("No node or failed to delete.");}
+
+        
+            var tempLineObj = mfJsonObj[nodeSearch];
+            var tempDiv = "div-"+ nodeSearch;
+              
+            for (var key in mfJsonObj) {
+                console.log("KEY:::",key);
+                var value = mfJsonObj[key];
+                
+                console.log("VALUE:::",value);
+                
+                if (key.startsWith("div-") === true){
+                    var valueObj = JSON.parse(value);
+                    console.log("VALUEOBJ:::",valueObj);
+                
+                    if (typeof valueObj === 'object') {
+                        for (var subKey in valueObj) {
+                            var subValue = valueObj[subKey];
+                            if (subValue === tempDiv) {
+                                console.log('SUB Property=' + subKey + ' value=' + subValue);
+                                delete valueObj[subKey];
+                                mfJsonObj[key] = JSON.stringify(valueObj);
+                            }
+                        }
+                    }
+                
+                    if (value === tempDiv) {
+                        console.log('property=' + key + ' value=' + value);
+                    }
+                }
+                
+            }
+            //delete node that was searched - above the DIVS are also cleaned up.   
+            delete mfJsonObj[nodeSearch];
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJsonObj));
+
+        //delete live ID's
+        //DOM
+        var nodeDelete = document.getElementById(nodeSearch);
+        nodeDelete.style.display = "none";
+        //nodeDelete.remove();
+        //SVG line
+        var svgLineId = "line-"+nodeSearch;
+        console.log("svgLineId:::",svgLineId);
+        var svgLine = document.getElementById(svgLineId);
+        console.log("svgLine:::",svgLine);
+        
+        svgLine.style.display = "none";
+        //svgLine.remove();
+
+
+        console.log("Node and line Deleted:::",nodeSearch);
+    }
+    else{
+        console.log("Node was not Deleted:::",nodeSearch);
+    }    
+}
+
+function createChildNode(e){
+
+    console.log("target id at begin of createChildNode",e.target.id);
+    //get info about existing parent node
+    let currentParentNode = document.getElementById("formNodeId");
+    console.log("current parent node",currentParentNode);
+    //console.log("Current PID=",e.target.id);
+    var currentParentNodeId = currentParentNode.getAttribute("value");
+    console.log("value ID:",currentParentNodeId);
+
+    //get coOrds
+    let parentNode = document.getElementById(currentParentNodeId);
+    let parentNodeCoords = parentNode.getBoundingClientRect();
+    console.log("DEBUG:::parentNodeCoords:::",parentNodeCoords);
+    
+    //work out line start coords from the parent coords
+    let lineStartX = parentNodeCoords.left + (parentNodeCoords.width/2);
+    let lineStartY = parentNodeCoords.top + (parentNodeCoords.height/2);
+
+    console.log("lineStartX/Y",lineStartX,":::",lineStartY);
+    
+    //Get upstream DIV
+    var parentDivId = "div-"+currentParentNodeId;
+    var parentDiv = document.getElementById(parentDivId);
+    console.log("parentDiv:::",parentDiv);
+    //ID created with date as unique hash  
+     var childNodeName = "node-"+Date.now();
+    
+    //create child DIV
+    //DEBUG:::DIV
+    var childDiv = document.createElement("DIV");
+    var childDivNameId = "div-"+ childNodeName;
+    console.log("childDivNameId:::",childDivNameId);
+    childDiv.setAttribute("id",childDivNameId);
+    console.log("childDiv:::",childDiv);
+
+    //append to document
+    parentDiv.appendChild(childDiv);
+
+    //var x = document.createElement("INPUT");
+    var x = document.createElement("TEXTAREA");
+        
+    x.setAttribute("type", "text");
+    x.setAttribute("id",childNodeName);
+    x.setAttribute("class","defaultNode");
+    x.style.position = "absolute";
+    x.style.backgroundColor = "white";
+    x.style.color = "black";
+    var nodeBorderColor = "black";
+    x.style.borderColor = nodeBorderColor;
+    x.style.top = Math.floor(Math.random() * Math.floor(window.innerHeight - (window.innerHeight/3)))+"px";
+    x.style.left = Math.floor(Math.random() * Math.floor(window.innerWidth - (window.innerWidth/3)))+"px";
+    x.setAttribute("draggable","true");
+
+    //append to childDiv document
+    childDiv.appendChild(x);
+   
+    //save to local storage
+    var childNodeCoordsObj = x.getBoundingClientRect();
+
+    //work out line start coords from the parent coords
+    let lineEndX = childNodeCoordsObj.left + (childNodeCoordsObj.width/2);
+    let lineEndY = childNodeCoordsObj.top + (childNodeCoordsObj.height/2);
+
+    console.log("lineEndX/Y",lineEndX,":::",lineEndY);
+    //create the naem for the line that connects from child to parent node
+    var childNodeNameLine = "line-"+childNodeName;
+    
+    //draw a canvas line 
+    //drawLineCanvas(lineStartX,lineStartY,lineEndX,lineEndY);
+    drawLineSvg(lineStartX,lineStartY,lineEndX,lineEndY,nodeBorderColor,childNodeNameLine);
+
+    //Store each node as a subset of the localstorage and stringify all of it.
+    //load storage vars so can append
+    var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+    
+    //DEBUG:::DIVS
+    //initialise temp object
+    console.log("mfJson:::",mfJson);
+    console.log('parentDivId:::',parentDivId);
+    try{
+        var tempDivParentObj = JSON.parse(mfJson[parentDivId]);
+        tempDivParentObj[childDivNameId] = childDivNameId;
+        var tempDivParentStringify = JSON.stringify(tempDivParentObj);
+        mfJson[parentDivId] = tempDivParentStringify;
+    }
+    catch {
+            //DEBUG:::DIV
+            //initialise temp object
+            var tempDivParentObj = {};    
+            tempDivParentObj[childDivNameId] = childDivNameId;
+            var tempDivParentStringify = JSON.stringify(tempDivParentObj);
+            mfJson[parentDivId] = tempDivParentStringify;
+    }
+    //add the child coords
+    ///var tempChildNodeObj = childNodeCoordsObj; 
+    //initialise temp object
+    var tempChildNodeObj = {};
+    tempChildNodeObj["x"] = childNodeCoordsObj.x;
+    tempChildNodeObj["y"] = childNodeCoordsObj.y;
+    tempChildNodeObj["left"] = childNodeCoordsObj.left;
+    tempChildNodeObj["top"] = childNodeCoordsObj.top;
+    tempChildNodeObj["width"] = childNodeCoordsObj.width;
+    tempChildNodeObj["height"] = childNodeCoordsObj.height;
+    tempChildNodeObj["right"] = childNodeCoordsObj.right;
+    tempChildNodeObj["bottom"] = childNodeCoordsObj.bottom;
+    tempChildNodeObj["nodeType"] = "child";
+
+
+
+    //console.log("tempChildNodeObj",tempChildNodeObj);
+    //save line attributes to localstorage - obj to string and store
+    tempChildNodeObj["lineStartX"] = lineStartX;
+    tempChildNodeObj["lineStartY"] = lineStartY;
+    tempChildNodeObj["lineEndX"] = lineEndX;
+    tempChildNodeObj["lineEndY"] = lineEndY;
+    tempChildNodeObj["nodeText"] = childNodeName;
+    tempChildNodeObj["bgNodeColor"] = "white";
+    tempChildNodeObj["fontNodeColor"] = "black";
+    tempChildNodeObj["borderNodeColor"] = nodeBorderColor;
+    console.log("tempChildNodeObj",tempChildNodeObj);
+    //make a string out of the child object
+    var tempChildNodeString = JSON.stringify(tempChildNodeObj);
+
+    console.log("tempChildNodeString",tempChildNodeString);
+
+    //save coords string into node name line
+    mfJson[childNodeName] = tempChildNodeString;
+    
+    console.log("mfJson[nodeName]",mfJson[childNodeName]);
+    //store nodename key
+    localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+/*
+     //only log continuously if true
+     if (versionControlBool === true){
+        if (childNodeName.startsWith("node") === true){
+            //DEBUG - Continous save
+            exportLocalStorage();
+            console.log("export backup:::createChildNode");
+        }
+    }
+    else{
+        console.log("versionControlLog status:::",versionControlBool);
+    }
+*/
+}
+
+//draws a line from child to parent and stores it in local storage
+function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine){
+    //catch cords empty or undefined - DEBUG for now becuase cannot find the issue
+    if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || yEnd !== 'undefined' || childNodeNameLine !== 'undefined'){
+
+    
+    //console.log("drawline cords made it to SVG function",xStart,":",yStart,":",xEnd,":",yEnd,":",childNodeNameLine);
+    //SVG canvas
+    
+    var xmlns = "http://www.w3.org/2000/svg";
+    var svgElem = document.getElementById("svgDivId");
+    //var svgElemStatus = document.getElementById("svgParent").contains(svg);
+    //console.log("svgElem status:::",svgElem);
+    //check if it exists
+    if ((typeof(svgElem) === 'undefined') || (svgElem === null)){
+        var svgElem = document.createElementNS(xmlns, "svg");
+        var boxWidth = window.innerWidth - 100;
+        var boxHeight = window.innerHeight - 100;
+
+        //console.log("bogWidth/Height",boxWidth,":::",boxHeight);
+    
+        svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
+        svgElem.setAttributeNS(null, "width", boxWidth);
+        svgElem.setAttributeNS(null, "height", boxHeight);
+        svgElem.setAttributeNS(null,"id","svgDivId")
+        svgElem.style.display = "block";
+
+        var svgId = document.getElementById("svgParent");
+        svgId.appendChild(svgElem);
+    }
+    
+        var newLine = document.createElementNS(xmlns,'line');
+            newLine.setAttribute('id',childNodeNameLine);
+            newLine.setAttribute('x1',xStart);
+            newLine.setAttribute('y1',yStart);
+            newLine.setAttribute('x2',xEnd);
+            newLine.setAttribute('y2',yEnd);
+            newLine.setAttribute("stroke", nodeBorderColor);
+            svgElem.append(newLine);
+/*
+        //DEBUG:::Circle
+        //side A
+        var circleMenuSvgId = "circle-"+childNodeNameLine;
+
+        var newCircleA = document.createElementNS(xmlns,'circle');
+        newCircleA.setAttribute('id',circleMenuSvgId);
+        newCircleA.setAttribute('cx',xStart);
+        newCircleA.setAttribute('cy',yStart);
+        newCircleA.setAttribute('r','10');
+        newCircleA.setAttribute('stroke-width','1');
+        newCircleA.setAttribute("stroke", "black");
+        newCircleA.setAttribute("fill", "none");
+
+        svgElem.append(newCircleA);
+
+        //DEBUG:::Circle
+        //Side B
+
+        var newCircleB = document.createElementNS(xmlns,'circle');
+        newCircleB.setAttribute('id',circleMenuSvgId);
+        newCircleB.setAttribute('cx',xEnd);
+        newCircleB.setAttribute('cy',yEnd);
+        newCircleB.setAttribute('r','10');
+        newCircleB.setAttribute('stroke-width','1');
+        newCircleB.setAttribute("stroke", "black");
+        newCircleB.setAttribute("fill", "none");
+
+        svgElem.append(newCircleB);
+
+        
+        
+        
+            //<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+            */
+    }
+}
+
+
+//draws a line from child to parent and stores it in local storage
+function updateLineSvg(xStart,yStart,xEnd,yEnd,childNodeNameLine){
+//catch cords emoty or undefined - DEBUG for now becuase cannot find the issue
+if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || yEnd !== 'undefined' || childNodeNameLine !== 'undefined'){
+    //SVG canvas
+    var xmlns = "http://www.w3.org/2000/svg";
+    var svgElem = document.getElementById("svgDivId");
+    //var svgElemStatus = document.getElementById("svgParent").contains(svg);
+    console.log("svgElem status:::",svgElem);
+    //check if it exists
+    if ((typeof(svgElem) === 'undefined') || (svgElem === null)){
+        var svgElem = document.createElementNS(xmlns, "svg");
+        var boxWidth = window.innerWidth - 100;
+        var boxHeight = window.innerHeight - 100;
+
+        console.log("bogWidth/Height",boxWidth,":::",boxHeight);
+    
+        svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
+        svgElem.setAttributeNS(null, "width", boxWidth);
+        svgElem.setAttributeNS(null, "height", boxHeight);
+        svgElem.setAttributeNS(null,"id","svgDivId")
+        svgElem.style.display = "block";
+
+        var svgId = document.getElementById("svgParent");
+        svgId.appendChild(svgElem);
+    }
+    var existingLine = document.getElementById(childNodeNameLine);
+    //var newLine = document.createElementNS(xmlns,'line');
+        //existingLine.setAttribute('id',childNodeNameLine);
+        existingLine.setAttribute('x1',xStart);
+        existingLine.setAttribute('y1',yStart);
+        existingLine.setAttribute('x2',xEnd);
+        existingLine.setAttribute('y2',yEnd);
+        //existingLine.setAttribute("stroke", "black")
+        svgElem.append(existingLine);
+/*
+         //DEBUG:::Circle
+        //side A
+        var circleMenuSvgId = "circle-"+childNodeNameLine;
+
+var newCircleA = document.createElementNS(xmlns,'circle');
+newCircleA.setAttribute('id',circleMenuSvgId);
+newCircleA.setAttribute('cx',xStart);
+newCircleA.setAttribute('cy',yStart);
+newCircleA.setAttribute('r','10');
+newCircleA.setAttribute('stroke-width','1');
+newCircleA.setAttribute("stroke", "black");
+newCircleA.setAttribute("fill", "none");
+
+svgElem.append(newCircleA);
+
+//DEBUG:::Circle
+//Side B
+
+var newCircleB = document.createElementNS(xmlns,'circle');
+newCircleB.setAttribute('id',circleMenuSvgId);
+newCircleB.setAttribute('cx',xEnd);
+newCircleB.setAttribute('cy',yEnd);
+newCircleB.setAttribute('r','10');
+newCircleB.setAttribute('stroke-width','1');
+newCircleB.setAttribute("stroke", "black");
+newCircleB.setAttribute("fill", "none");
+
+svgElem.append(newCircleB);
+
+
+
+
+    //<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+
+*/
+
+
+}
+}
+
+//delete menu form that pops up if close button pressed
+function deleteForm(e) { 
+    let formDom = document.getElementById("formDivContainer");
+    while (formDom.firstChild) {
+        formDom.removeChild(formDom.firstChild);
+    }
+
+    var x = document.getElementById("formDivContainer");
+    console.log("Form=",x);
+    x.remove();
+
+}
+
+
+
+  //create a node
+  function createLocalStorage(e){
+    e.preventDefault();
+    //create a key
+    localStorageKeyName = window.prompt("New MindMap Name for brower local Storage?", "Choose Name")
+    //Change title to key name
+    var x = document.getElementById("mfHtmlTitle");
+    var mfHtmlTitle = localStorageKeyName;
+    //create version control
+    var mfVersion = window.prompt("Version:?","1.0");
+    
+    document.getElementById("mfVersion").innerHTML = mfVersion;
+    //save the html title
+    //mfJson["mfHtmlTitle"] = mfHtmlTitle;
+    
+    mfJson = {"mfHtmlTitle":mfHtmlTitle};
+    mfJson["mfVersion"] = mfVersion;
+    localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+    var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+  }  
+
+//load from localstorage
+function loadLocalStorage(e){
+    //get how many keys stored = MF Mindmaps
+    let lengthArrayLocalStorage = Object.keys(localStorage).length;
+    console.log("# Keys = "+lengthArrayLocalStorage);
+    let arrayStringLocalStorage =  Object.keys(localStorage)
+    var result = window.prompt("Existing Mindmaps in LocalStorage in Browser - Do you want to load one?",arrayStringLocalStorage);
+  
+    localStorageKeyName = result;
+    console.log("Key Name for existing"+localStorageKeyName);
+  
+    var x = document.getElementById("mfHtmlTitle");
+    var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+    x.innerHTML = mfJson["mfHtmlTitle"];
+    console.log(mfJson["mfHtmlTitle"]);
+    document.getElementById("mfVersion").innerHTML = mfJson["mfVersion"];
+    
+    console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
+    
+    
+    // set the element's new position:
+    //elementMydiv.style.top = mindfullyJson.mydivTop + "px";
+    
+    //elementMydiv.style.left = mindfullyJson.mydivLeft + "px";
+    //change version prompt if required
+    var versionResult = window.prompt("Version:?",mfJson["mfVersion"]);
+    mfJson["mfVersion"] = versionResult;
+    document.getElementById("mfVersion").innerHTML = versionResult;
+    localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+
+    //load all nodes
+    var n = Object.keys(mfJson).length;
+    var keysLocalStorageArray = Object.keys(mfJson);
+    //DEBUG
+    console.log("kEYS#=",n);
+    console.log("ARRAY#=",keysLocalStorageArray);
+    for (var i=0;i < n;i++){
+
+        var tempString = keysLocalStorageArray[i];
+      
+        if (tempString.startsWith("div") === true){
+          //DEBUG:::DIV
+            try{
+                //check if its a parent or chuild node of document.body
+                var tempNode = tempString.replace("div-","");
+                console.log("changed to:::",tempNode);
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
+                console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
+            }
+            catch {console.log("Something went wrong or div was empty");}
+
+            //Setup the first div and associated child divs and nodes
+            if (lineJsonTempObj["nodeType"] == "parent"){
+                console.log("This node is a Parent not a child!");
+                //create DIV
+                
+                var nodeDivTemp = document.createElement("DIV");
+                var divNameId = tempString;
+                nodeDivTemp.setAttribute("id",divNameId);
+                //append to document
+                document.body.appendChild(nodeDivTemp);
+                retrieveSavedNodeFromLocalStorage(tempNode,result)
+                var tempNodeSet = document.getElementById(tempNode);
+                nodeDivTemp.appendChild(tempNodeSet);
+                //Load the child div names and create relative to parent
+                //load all nodes
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
+                var o = Object.keys(lineJsonTempObj).length;
+                console.log("var o:::",o);
+                var keysLineTempArray = Object.keys(lineJsonTempObj);
+                console.log("var keysLineTempArray:::",keysLineTempArray);
+                for (var j=0;j < o;j++){
+                    var tempDivString = keysLineTempArray[j];
+                    
+                    var nodeDivTempChild = document.createElement("DIV");
+                    var divNameId = tempDivString;
+                    
+                    nodeDivTempChild.setAttribute("id",divNameId);
+                    //append to document
+                    nodeDivTemp.appendChild(nodeDivTempChild);
+
+                    //get the child node
+                    var tempChildNode = divNameId.replace("div-","");
+                    retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                    var tempNodeChildSet = document.getElementById(tempChildNode);
+                    nodeDivTempChild.appendChild(tempNodeChildSet);
+
+                }
+            }
+            else {
+                //setup the rest of the divs and nodes after parent above
+                //load all nodes
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                console.log("DEBUG CHILD:::",mfJsonTempObj);
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
+                console.log("DEBUG CHILD:::",lineJsonTempObj);
+                var p = Object.keys(lineJsonTempObj).length;
+                console.log("var p:::",p);
+                var keysLineTempArray = Object.keys(lineJsonTempObj);
+                console.log("var keysLineTempArray:::",keysLineTempArray);
+                for (var k=0;k < p;k++){
+                    //try {
+                        var tempDivString = keysLineTempArray[k];
+                        console.log("PARENT DIV ID:::",tempString);
+                        //this parent div was created as above
+                        var divNameParent = document.getElementById(tempString);
+                        
+                        var nodeDivTempChild = document.createElement("DIV");
+                        var divNameChildId = tempDivString;
+                        
+                        nodeDivTempChild.setAttribute("id",divNameChildId);
+                        //append to document
+                        divNameParent.appendChild(nodeDivTempChild);
+
+                        //get the child node
+                        var tempChildNode = divNameChildId.replace("div-","");
+                        retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                        var tempNodeChildSet = document.getElementById(tempChildNode);
+                        nodeDivTempChild.appendChild(tempNodeChildSet);
+                    //}
+                    //catch {console.log("Something went wrong");}    
+                }
+            }    
+        }
+    }    
+}
+//load node and associated text
+function retrieveSavedNodeFromLocalStorage(nodeID,result){
+    //console.log("Node Name sent=",nodeID);
+    localStorageKeyName = result;
+    console.log("nodeID:",nodeID," result:",result);
+    //retrieve object based on nodename ID
+    //elementMydiv = document.getElementById(nodeID);
+    //get Mindmap stored data string and parse to JS Obj
+    var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+    //get sub string data based on a element - name of node - parse to JS Obj
+    var nodeNameObj = JSON.parse(mfJson[nodeID]);
+    //console.log(nodeNameObj["coOrds"]);
+
+    //var x = document.createElement("INPUT");
+    var x = document.createElement("TEXTAREA");
+    
+
+    x.setAttribute("type", "text");
+    x.setAttribute("id",nodeID);
+    x.setAttribute("class","defaultNode");
+    x.style.position = "absolute";
+    x.style.backgroundColor = nodeNameObj["bgNodeColor"];
+    x.style.color = nodeNameObj["fontNodeColor"];
+
+    var nodeBorderColor = nodeNameObj["borderNodeColor"];
+    x.style.borderColor = nodeBorderColor;
+    
+    x.setAttribute("draggable","true");
+    x.value = nodeNameObj["nodeText"];
+    //add text as well to TEXTAREA node in between brackets 
+    x.textContent = nodeNameObj["nodeText"];
+    //add the value attribute for offline file saving as well
+    x.setAttribute("value",nodeNameObj["nodeText"]); 
+    //append to document
+    document.body.appendChild(x);
+   
+    //save to local storage
+    //nodeCoOrds = x.getBoundingClientRect();
+    //x.style.top =  nodeNameObj["coOrds"]["nodeCoOrds.top"] + "px";
+    x.style.top =  nodeNameObj["top"] + "px";
+    x.style.left =  nodeNameObj["left"] + "px";
+    x.style.width =  nodeNameObj["width"] + "px";
+    x.style.height =  nodeNameObj["height"] + "px";
+    
+    //only draw if line exists
+    if (nodeNameObj["nodeType"] == "child"){
+        var xStart = nodeNameObj["lineStartX"];
+        var yStart = nodeNameObj["lineStartY"];
+        var xEnd = nodeNameObj["lineEndX"];
+        var yEnd = nodeNameObj["lineEndY"];
+
+        var childNodeNameLine = "line-"+ nodeID;
+
+        //draw the lines between child and parents
+        drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine);
+    }
+}    
+    
+    
+
+//create a node
+function createNode(e){
+    let localStorageKeyName = e.view.localStorageKeyName;  
+    //ID created with date as unique hash  
+    var nodeName = "node-"+Date.now();
+    //console.log("New node created:"+nodeName);
+    
+    //DEBUG:::DIV
+    var nodeDiv = document.createElement("DIV");
+    var divName = "div-"+ nodeName;
+    nodeDiv.setAttribute("id",divName);
+    //append to document
+    document.body.appendChild(nodeDiv);
+    
+    var x = document.createElement("TEXTAREA");
+    
+    x.setAttribute("type", "text");
+    x.setAttribute("id",nodeName);
+    x.setAttribute("class","defaultNode");
+    x.style.position = "absolute";
+    x.style.backgroundColor = "white";
+    x.style.color = "black";
+    x.style.borderColor = "black";
+    
+    x.setAttribute("draggable","true");
+
+    //append to document
+    nodeDiv.appendChild(x);
+   
+    //save to local storage
+    var nodeCoordsObj = x.getBoundingClientRect();
+    console.log(nodeCoordsObj);
+    //console.log("New node CoOrds =",nodeCoOrds.top, nodeCoOrds.right, nodeCoOrds.bottom, nodeCoOrds.left,nodeCoOrds.x,nodeCoOrds.y,nodeCoOrds.height,nodeCoOrds.width);
+
+    //Store each node as a subset of the localstorage and stringify all of it.
+    //load storage vars so can append
+    var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+    
+    //work out line start coords from the parent coords -  //required if child nodes move and they will need the upstream coords
+    let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+    let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+    //DEBUG:::DIV
+    //initialise temp object
+    var tempDivObj = {};
+    //tempDivObj[nodeName] = nodeName;
+    var tempDivStringify = JSON.stringify(tempDivObj);
+    mfJson[divName] = tempDivStringify;
+    
+
+    //add the parent coords 
+    //initialise temp object
+    var tempNodeCoordsObj = {};
+    tempNodeCoordsObj["x"] = nodeCoordsObj.x;
+    tempNodeCoordsObj["y"] = nodeCoordsObj.y;
+    tempNodeCoordsObj["left"] = nodeCoordsObj.left;
+    tempNodeCoordsObj["top"] = nodeCoordsObj.top;
+    tempNodeCoordsObj["width"] = nodeCoordsObj.width;
+    tempNodeCoordsObj["height"] = nodeCoordsObj.height;
+    tempNodeCoordsObj["right"] = nodeCoordsObj.right;
+    tempNodeCoordsObj["bottom"] = nodeCoordsObj.bottom;
+
+    //required if child nodes move and they will need the upstream coords
+    tempNodeCoordsObj["lineEndX"] = lineEndX;
+    tempNodeCoordsObj["lineEndY"] = lineEndY;
+    
+    tempNodeCoordsObj["nodeType"] = "parent";
+    tempNodeCoordsObj["bgNodeColor"] = "white";
+    tempNodeCoordsObj["fontNodeColor"] = "black";
+    tempNodeCoordsObj["borderNodeColor"] = "black";
+    
+    var tempNodeCoordsStringify = JSON.stringify(tempNodeCoordsObj);
+    mfJson[nodeName] = tempNodeCoordsStringify;
+    
+    console.log("mfJson[nodeName]",mfJson[nodeName]);
+    //store nodename key
+    localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+   
+    //only log continuously if true
+    if (versionControlBool === true){
+        
+        //DEBUG - Continous save
+        exportLocalStorage();
+        console.log("export backup:::createNode");
+    }
+    else{
+        console.log("versionControlLog status:::",versionControlBool);
+    }
+  }
+
+function createNodeText(e){
+    //e.preventDefault();
+    let nodeSearch = e.target.id;
+    console.log(e);
+    //let localStorageKeyName = e.view.localStorageKeyName;
+
+    
+    console.log("localStorageKeyName:",localStorageKeyName);
+    
+    console.log("e.view:",e.view);
+    
+    //console.log("createnodetext Search:::",nodeSearch);
+    //if (nodeSearch.search("node") != -1){
+    if (nodeSearch.startsWith("node") === true){
+        //document.getElementById(e.target.id).addEventListener("mouseout", (e) =>{
+      
+        document.getElementById(e.target.id).addEventListener("mouseout", (e) =>{
+      
+            var inputId = document.getElementById(e.target.id);
+            var input = inputId.value;
+            //add text as well to TEXTAREA node in between brackets 
+            inputId.text = input;
+            inputId.setAttribute("value",input);  
+            console.log(e.target.id,":::",input);
+
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+    
+            //getnodeName key and make an object from the string
+            var nodeNameObj = JSON.parse(mfJson[e.target.id]);
+            //console.log("Objectof:",mfJson[e.target.id],"===",nodeNameObj);
+            nodeNameObj["nodeText"] = input;
+            //put back and stringify object nodeName
+            mfJson[e.target.id] = JSON.stringify(nodeNameObj);
+     
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+
+        });
+    }
+    //only log continuously if true
+    if (versionControlBool === true){
+        if (nodeSearch.startsWith("node") === true){
+            //DEBUG - Continous save
+            exportLocalStorage();
+            console.log("export backup:::createNodeText");
+        }
+    }
+    else{
+        console.log("versionControlLog status:::",versionControlBool);
+    }
+}
+
+function createMoveNode(e){
+    //e.preventDefault();
+    //e.target.id = the node being moved
+    console.log("node moving...................................................................-->",e.target.id);
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //get upstream lineEndX and lineEndY - node that moves
+    //get localstorage
+    let tempStringNodeId = e.target.id;
+    //only get the local storage node info if its a node
+    //if (tempStringNodeId.search("node") != -1){
+    if (tempStringNodeId.startsWith("node") === true){
+        let mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+        //getnodeName key and make an object from the string
+        var tempGetNodeNameObj = JSON.parse(mfJson[e.target.id]);
+        //from upstream parent
+        var tempLineEndX = tempGetNodeNameObj["lineEndX"];
+        var tempLineEndY = tempGetNodeNameObj["lineEndY"];
+    }
+    ////////////////////////////////////////////////////////////////////////////    
+
+    var moveXY = document.getElementById(e.target.id);
+    e.target.style.cursor = "pointer";
+    //DEBUG
+        var startX = e.pageX;
+        var startY = e.pageY;
+        console.log("Click Event startX and StartY:",startX,startY);
+    
+    let coordsMove = moveXY.getBoundingClientRect();
+
+    //calculate the difference between the top/left corner and where the click down drag occurred
+    //Really important as it allows the trueup of the corners without clicking exactly on the corner when dragging
+    let deviationX = startX - coordsMove.left;
+    let deviationY = startY - coordsMove.top;
+
+    console.log("DEBUG: DEVIATION from corner for X and Y is:", deviationX,deviationY);
+    //only required for debug to watch moving coords
+    moveXY.addEventListener("drag", (e) => {
+        //e.preventDefault();
+        if (browserReport.search("firefox") != -1){
+            console.log("gloablClientX:::",globalClientX);
+            console.log("globalClientY:::",globalClientY);
+        }
+        console.log(coordsMove);
+        console.log("X client cords = ",e.clientX,"Y client cords = ",e.clientY);
+        console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
+        console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
+        console.log(e);
+    
+    });
+    
+    moveXY.addEventListener("dragend", (e) => {
+        e.preventDefault();
+        e.target.style.cursor = "pointer";
+        //console.log("X client cords = ",e.clientX,"Y client cords = ",e.clientY);
+        //console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
+        //console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
+        //console.log(e);
+        if (browserReport.search("firefox") != -1){
+            moveXY.style.left = (globalClientX - deviationX) + "px";
+            moveXY.style.top = (globalClientY - deviationY) + "px";
+        }
+        else {
+            moveXY.style.left = (e.clientX - deviationX) + "px";
+            moveXY.style.top = (e.clientY - deviationY) + "px";
+        }
+        console.log("moveXY:::",moveXY);
+      
+
+        console.log("X/left corner of node",moveXY.style.left);
+        console.log("Y/top corner of node",moveXY.style.top);
+    
+        //Store each node as a subset of the localstorage and stringify all of it.
+        //load storage vars so can append
+        //save to local storage
+        var nodeCoordsObj = moveXY.getBoundingClientRect();
+        //work out line start coords from the parent coords
+        let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+        let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+        
+        
+        console.log("lineEndX for Parent or startx of child",lineEndX);
+        console.log("lineEndY for Parent or startY of child",lineEndY);
+        
+        //add the node coords 
+            //initialise temp object
+            var tempNodeObj = {};
+            tempNodeObj["x"] = nodeCoordsObj.x;
+            tempNodeObj["y"] = nodeCoordsObj.y;
+            tempNodeObj["left"] = nodeCoordsObj.left;
+            tempNodeObj["top"] = nodeCoordsObj.top;
+            tempNodeObj["width"] = nodeCoordsObj.width;
+            tempNodeObj["height"] = nodeCoordsObj.height;
+            tempNodeObj["right"] = nodeCoordsObj.right;
+            tempNodeObj["bottom"] = nodeCoordsObj.bottom;
+            
+        //get localstorage
+        var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+       
+        //getnodeName key and make an object from the string
+        var nodeNameObj = JSON.parse(mfJson[e.target.id]);
+        //console.log("nodeNameObj after loading from local storage before object move:::",nodeNameObj);
+        var input = nodeNameObj["nodeText"];
+         
+        //load back new cooords and data
+        tempNodeObj["nodeText"] = input;
+        //add back into the object the node type - parent/child
+        tempNodeObj["nodeType"] = nodeNameObj["nodeType"];
+        //load color
+        tempNodeObj["bgNodeColor"] = nodeNameObj["bgNodeColor"];
+        tempNodeObj["fontNodeColor"] = nodeNameObj["fontNodeColor"];
+        tempNodeObj["borderNodeColor"] = nodeNameObj["borderNodeColor"];
+
+        //parent coords dont change
+        tempNodeObj["lineEndX"] = lineEndX;
+        tempNodeObj["lineEndY"] = lineEndY;
+        
+        if (nodeNameObj["nodeType"] == "child"){
+        
+                tempNodeObj["lineStartX"] = nodeNameObj["lineStartX"];
+                tempNodeObj["lineStartY"] = nodeNameObj["lineStartY"];
+        
+            //line name to be updated 
+            var childNodeNameLine = "line-"+ e.target.id;
+        
+            //redraw line with new coordinates
+            updateLineSvg(nodeNameObj["lineStartX"],nodeNameObj["lineStartY"],lineEndX,lineEndY,childNodeNameLine);
+            //debug
+            //console.log("tempNodeObj after running updateLineSVG:::",tempNodeObj);
+            
+        }
+        var tempNodeString = JSON.stringify(tempNodeObj);
+        mfJson[e.target.id] = tempNodeString;
+        
+        //console.log("mfJson[e.target.id]",mfJson[e.target.id]);
+        //store nodename key
+        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+
+        //////////////////////////////////////////////////////////////////
+        //Update all child nodes attached to the upstream parent so they are not orphaned
+        //load all nodes
+        var n = Object.keys(mfJson).length;
+        var keysLocalStorageArray = Object.keys(mfJson);
+        //DEBUG
+        //console.log("kEYS#=",n);
+        //console.log("ARRAY#=",keysLocalStorageArray);
+        for (var i=0;i < n;i++){
+
+        let tempString = keysLocalStorageArray[i];
+        
+        //iterate over and only update nodes
+            //if (tempString.search("node") != -1){
+            if (tempString.startsWith("node") === true){
+                //console.log("Node:",tempString);
+                //get localstorage
+                //var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+                //getnodeName key and make an object from the string
+                var tempNodeNameObj = JSON.parse(mfJson[tempString]);
+                //console.log('tempNodeNameObj[lineStartX]',tempNodeNameObj["lineStartX"]);
+                //console.log('nodeNameObj[lineEndX]',nodeNameObj["lineEndX"]);
+                
+                if (((tempNodeNameObj["lineStartX"] == tempLineEndX) || ((tempNodeNameObj["lineStartX"] >= (tempLineEndX-10)) && (tempNodeNameObj["lineStartX"] <= (tempLineEndX+10)))) && ((tempNodeNameObj["lineStartY"] == tempLineEndY) || ((tempNodeNameObj["lineStartY"] >= (tempLineEndY-10)) && (tempNodeNameObj["lineStartY"] <= (tempLineEndY+10))))) {
+                 //console.log("This node Qualifies:::",tempNodeNameObj);
+                    
+                    //double check node line corrods being stored
+                    var mfJsonTemp = JSON.parse(localStorage.getItem(localStorageKeyName));
+                    //getnodeName key and make an object from the string
+                    var nodeMovingTemp = JSON.parse(mfJsonTemp[e.target.id]);
+                    //update lineStartX and LineStartY
+                    tempNodeNameObj["lineStartX"] = nodeMovingTemp["lineEndX"];
+                    tempNodeNameObj["lineStartY"] = nodeMovingTemp["lineEndY"];
+                    
+                    //store nodename key
+                    var tempNodeNameString = JSON.stringify(tempNodeNameObj);
+                    mfJson[tempString] = tempNodeNameString;
+                    localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+                    //line name to be updated 
+                    var childNodeNameLine = "line-"+ tempString;
+        
+                    //redraw line with new coordinates
+                    updateLineSvg(tempNodeNameObj["lineStartX"],tempNodeNameObj["lineStartY"],tempNodeNameObj["lineEndX"],tempNodeNameObj["lineEndY"],childNodeNameLine);
+                }
+            }
+        }
+    });
+    //only perform save and edit coords if its a node
+    //if (tempStringNodeId.search("node") != -1){
+    if (tempStringNodeId.startsWith("node") === true){  
+        ///////////DEBUG///////////////////////////////
+        moveXY.addEventListener("mouseup", (e) => {
+            e.target.style.cursor = "pointer";
+            //console.log("X client cords = ",e.clientX,"Y client cords = ",e.clientY);
+            //console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
+            //console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
+            //console.log(e);
+    
+            //moveXY.style.left = (e.clientX - deviationX) + "px";
+            //moveXY.style.top = (e.clientY - deviationY) + "px";
+    
+            console.log("moveXY:::",moveXY);
+      
+
+            console.log("X/left corner of node",moveXY.style.left);
+            console.log("Y/top corner of node",moveXY.style.top);
+    
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            //save to local storage
+            var nodeCoordsObj = moveXY.getBoundingClientRect();
+            //work out line start coords from the parent coords
+            let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+            let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+        
+            console.log("lineEndX for Parent or startx of child",lineEndX);
+            console.log("lineEndY for Parent or startY of child",lineEndY);
+        
+            //add the node coords 
+            //initialise temp object
+            var tempNodeObj = {};
+            tempNodeObj["x"] = nodeCoordsObj.x;
+            tempNodeObj["y"] = nodeCoordsObj.y;
+            tempNodeObj["left"] = nodeCoordsObj.left;
+            tempNodeObj["top"] = nodeCoordsObj.top;
+            tempNodeObj["width"] = nodeCoordsObj.width;
+            tempNodeObj["height"] = nodeCoordsObj.height;
+            tempNodeObj["right"] = nodeCoordsObj.right;
+            tempNodeObj["bottom"] = nodeCoordsObj.bottom;
+            
+            //get localstorage
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+       
+            //getnodeName key and make an object from the string
+            var nodeNameObj = JSON.parse(mfJson[e.target.id]);
+            //console.log("nodeNameObj after loading from local storage before object move:::",nodeNameObj);
+            var input = nodeNameObj["nodeText"];
+         
+            //load back new cooords and data
+            tempNodeObj["nodeText"] = input;
+            //add back into the object the node type - parent/child
+            tempNodeObj["nodeType"] = nodeNameObj["nodeType"];
+            //load color
+            tempNodeObj["bgNodeColor"] = nodeNameObj["bgNodeColor"];
+            tempNodeObj["fontNodeColor"] = nodeNameObj["fontNodeColor"];
+            tempNodeObj["borderNodeColor"] = nodeNameObj["borderNodeColor"];
+
+            //parent coords dont change
+            tempNodeObj["lineEndX"] = lineEndX;
+            tempNodeObj["lineEndY"] = lineEndY;
+        
+            if (nodeNameObj["nodeType"] == "child"){
+        
+                tempNodeObj["lineStartX"] = nodeNameObj["lineStartX"];
+                tempNodeObj["lineStartY"] = nodeNameObj["lineStartY"];
+        
+                //line name to be updated 
+                var childNodeNameLine = "line-"+ e.target.id;
+        
+                //redraw line with new coordinates
+                updateLineSvg(nodeNameObj["lineStartX"],nodeNameObj["lineStartY"],lineEndX,lineEndY,childNodeNameLine);
+                //debug
+                //console.log("tempNodeObj after running updateLineSVG:::",tempNodeObj);
+            
+            }
+        var tempNodeString = JSON.stringify(tempNodeObj);
+        mfJson[e.target.id] = tempNodeString;
+        
+        //console.log("mfJson[e.target.id]",mfJson[e.target.id]);
+        //store nodename key
+        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+
+        //////////////////////////////////////////////////////////////////
+        //Update all child nodes attached to the upstream parent so they are not orphaned
+        //load all nodes
+        var n = Object.keys(mfJson).length;
+        var keysLocalStorageArray = Object.keys(mfJson);
+        //DEBUG
+        //console.log("kEYS#=",n);
+        //console.log("ARRAY#=",keysLocalStorageArray);
+        for (var i=0;i < n;i++){
+
+        let tempString = keysLocalStorageArray[i];
+        
+        //iterate over and only update nodes
+            //if (tempString.search("node") != -1){
+            if (tempString.startsWith("node") === true){  
+                //console.log("Node:",tempString);
+                //get localstorage
+                //var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+                //getnodeName key and make an object from the string
+                var tempNodeNameObj = JSON.parse(mfJson[tempString]);
+                //console.log('tempNodeNameObj[lineStartX]',tempNodeNameObj["lineStartX"]);
+                //console.log('nodeNameObj[lineEndX]',nodeNameObj["lineEndX"]);
+                
+                if (((tempNodeNameObj["lineStartX"] == tempLineEndX) || ((tempNodeNameObj["lineStartX"] >= (tempLineEndX-10)) && (tempNodeNameObj["lineStartX"] <= (tempLineEndX+10)))) && ((tempNodeNameObj["lineStartY"] == tempLineEndY) || ((tempNodeNameObj["lineStartY"] >= (tempLineEndY-10)) && (tempNodeNameObj["lineStartY"] <= (tempLineEndY+10))))) {
+                 //console.log("This node Qualifies:::",tempNodeNameObj);
+                    
+                    //double check node line corrods being stored
+                    var mfJsonTemp = JSON.parse(localStorage.getItem(localStorageKeyName));
+                    //getnodeName key and make an object from the string
+                    var nodeMovingTemp = JSON.parse(mfJsonTemp[e.target.id]);
+                    //update lineStartX and LineStartY
+                    tempNodeNameObj["lineStartX"] = nodeMovingTemp["lineEndX"];
+                    tempNodeNameObj["lineStartY"] = nodeMovingTemp["lineEndY"];
+                    
+                    //store nodename key
+                    var tempNodeNameString = JSON.stringify(tempNodeNameObj);
+                    mfJson[tempString] = tempNodeNameString;
+                    localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+                    //line name to be updated 
+                    var childNodeNameLine = "line-"+ tempString;
+        
+                    //redraw line with new coordinates
+                    updateLineSvg(tempNodeNameObj["lineStartX"],tempNodeNameObj["lineStartY"],tempNodeNameObj["lineEndX"],tempNodeNameObj["lineEndY"],childNodeNameLine);
+                }
+            }
+        }
+    });
+}
+    //only log continuously if true
+    if (versionControlBool === true){
+        if (tempStringNodeId.startsWith("node") === true){
+            //DEBUG - Continous save
+            exportLocalStorage();
+            console.log("export backup:::createMoveNode");
+        }
+    }
+    else{
+        console.log("versionControlLog status:::",versionControlBool);
+    }
+}
+
+//Touch Move
+
+function createTouchMoveNode(){
+    //setup an eventlistener for the touchend event
+    document.addEventListener("touchmove",(e) => {
+        //e.preventDefault();
+        //e.target.id = the node being moved
+        console.log("createTouchMoveNode --- Should be moving..............................................-->",e.target.id);
+    
+        ////////////////////////////////////////////////////////////////////////////
+        //get upstream lineEndX and lineEndY - node that moves
+        //get localstorage
+        let tempStringNodeId = e.target.id;
+        //only get the local storage node info if its a node
+        //if (tempStringNodeId.search("node") != -1){
+        if (tempStringNodeId.startsWith("node") === true){
+            let mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+            //getnodeName key and make an object from the string
+            var tempGetNodeNameObj = JSON.parse(mfJson[e.target.id]);
+            //from upstream parent
+            var tempLineEndX = tempGetNodeNameObj["lineEndX"];
+            var tempLineEndY = tempGetNodeNameObj["lineEndY"];
+        }
+        ////////////////////////////////////////////////////////////////////////////    
+
+        var moveXY = document.getElementById(e.target.id);
+        e.target.style.cursor = "pointer";
+
+        //DEBUG Touch -- fork in the road
+        var touchCount = e.touches.length;
+
+            var startX = e.touches[0].clientX;
+            var startY = e.touches[0].clientY;
+            console.log("Touch Event startX and Touch StartY:",startX,startY);
+
+            let coordsMove = moveXY.getBoundingClientRect();
+            //calculate the difference between the top/left corner and where the click down drag occurred
+            //Really important as it allows the trueup of the corners without clicking exactly on the corner when dragging
+            let deviationX = startX - coordsMove.left;
+            let deviationY = startY - coordsMove.top;
+            console.log("DEBUG: TOUCH ::: DEVIATION from corner for X and Y is:", deviationX,deviationY);
+
+        //DEBUG - log movements of clientx and clienty
+            console.log("X client cords = ",e.touches[0].clientX,"Y client cords = ",e.touches[0].clientY);
+            console.log("X screen cords = ",e.touches[0].screenX,"Y screen cords = ",e.touches[0].screenY);
+    
+        
+        //setup an eventlistener for the touchend event
+        
+            //stop any defualt actions of touchend
+            //e.preventDefault();
+            //e.target.style.cursor = "pointer";
+             
+            console.log("Touch Events:::",e);
+
+            console.log("X client cords = ",e.changedTouches[0].clientX,"Y client cords = ",e.changedTouches[0].clientY);
+            console.log("X screen cords = ",e.changedTouches[0].screenX,"Y screen cords = ",e.changedTouches[0].screenY);
+
+            moveXY.style.left = (e.changedTouches[0].clientX - deviationX) + "px";
+            moveXY.style.top = (e.changedTouches[0].clientY - deviationY) + "px";
+    
+            console.log("moveXY:::",moveXY);
+      
+            console.log("X/left corner of node",moveXY.style.left);
+            console.log("Y/top corner of node",moveXY.style.top);
+    
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            //save to local storage
+            var nodeCoordsObj = moveXY.getBoundingClientRect();
+            //work out line start coords from the parent coords
+            let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+            let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+        
+        
+            console.log("lineEndX for Parent or startx of child",lineEndX);
+            console.log("lineEndY for Parent or startY of child",lineEndY);
+        
+            //add the node coords 
+            //initialise temp object
+            var tempNodeObj = {};
+            tempNodeObj["x"] = nodeCoordsObj.x;
+            tempNodeObj["y"] = nodeCoordsObj.y;
+            tempNodeObj["left"] = nodeCoordsObj.left;
+            tempNodeObj["top"] = nodeCoordsObj.top;
+            tempNodeObj["width"] = nodeCoordsObj.width;
+            tempNodeObj["height"] = nodeCoordsObj.height;
+            tempNodeObj["right"] = nodeCoordsObj.right;
+            tempNodeObj["bottom"] = nodeCoordsObj.bottom;
+            
+            //get localstorage
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+       
+            //getnodeName key and make an object from the string
+            var nodeNameObj = JSON.parse(mfJson[e.target.id]);
+            //console.log("nodeNameObj after loading from local storage before object move:::",nodeNameObj);
+            var input = nodeNameObj["nodeText"];
+         
+            //load back new cooords and data
+            tempNodeObj["nodeText"] = input;
+            //add back into the object the node type - parent/child
+            tempNodeObj["nodeType"] = nodeNameObj["nodeType"];
+            //load color
+            tempNodeObj["bgNodeColor"] = nodeNameObj["bgNodeColor"];
+            tempNodeObj["fontNodeColor"] = nodeNameObj["fontNodeColor"];
+            tempNodeObj["borderNodeColor"] = nodeNameObj["borderNodeColor"];
+
+            //parent coords dont change
+            tempNodeObj["lineEndX"] = lineEndX;
+            tempNodeObj["lineEndY"] = lineEndY;
+        
+            if (nodeNameObj["nodeType"] == "child"){
+        
+                tempNodeObj["lineStartX"] = nodeNameObj["lineStartX"];
+                tempNodeObj["lineStartY"] = nodeNameObj["lineStartY"];
+        
+                //line name to be updated 
+                var childNodeNameLine = "line-"+ e.target.id;
+        
+                //redraw line with new coordinates
+                updateLineSvg(nodeNameObj["lineStartX"],nodeNameObj["lineStartY"],lineEndX,lineEndY,childNodeNameLine);
+                //debug
+                //console.log("tempNodeObj after running updateLineSVG:::",tempNodeObj);
+            
+            }
+            var tempNodeString = JSON.stringify(tempNodeObj);
+            mfJson[e.target.id] = tempNodeString;
+        
+            //console.log("mfJson[e.target.id]",mfJson[e.target.id]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+
+            //////////////////////////////////////////////////////////////////
+            //Update all child nodes attached to the upstream parent so they are not orphaned
+            //load all nodes
+            var n = Object.keys(mfJson).length;
+            var keysLocalStorageArray = Object.keys(mfJson);
+            //DEBUG
+            //console.log("kEYS#=",n);
+            //console.log("ARRAY#=",keysLocalStorageArray);
+            for (var i=0;i < n;i++){
+
+                let tempString = keysLocalStorageArray[i];
+        
+                //iterate over and only update nodes
+                //if (tempString.search("node") != -1){
+                if (tempString.startsWith("node") === true){
+                    //console.log("Node:",tempString);
+                    //get localstorage
+                    //var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+                    //getnodeName key and make an object from the string
+                    var tempNodeNameObj = JSON.parse(mfJson[tempString]);
+                    //console.log('tempNodeNameObj[lineStartX]',tempNodeNameObj["lineStartX"]);
+                    //console.log('nodeNameObj[lineEndX]',nodeNameObj["lineEndX"]);
+                
+                    if (((tempNodeNameObj["lineStartX"] == tempLineEndX) || ((tempNodeNameObj["lineStartX"] >= (tempLineEndX-10)) && (tempNodeNameObj["lineStartX"] <= (tempLineEndX+10)))) && ((tempNodeNameObj["lineStartY"] == tempLineEndY) || ((tempNodeNameObj["lineStartY"] >= (tempLineEndY-10)) && (tempNodeNameObj["lineStartY"] <= (tempLineEndY+10))))) {
+                        //console.log("This node Qualifies:::",tempNodeNameObj);
+                    
+                        //double check node line corrods being stored
+                        var mfJsonTemp = JSON.parse(localStorage.getItem(localStorageKeyName));
+                        //getnodeName key and make an object from the string
+                        var nodeMovingTemp = JSON.parse(mfJsonTemp[e.target.id]);
+                        //update lineStartX and LineStartY
+                        tempNodeNameObj["lineStartX"] = nodeMovingTemp["lineEndX"];
+                        tempNodeNameObj["lineStartY"] = nodeMovingTemp["lineEndY"];
+                    
+                        //store nodename key
+                        var tempNodeNameString = JSON.stringify(tempNodeNameObj);
+                        mfJson[tempString] = tempNodeNameString;
+                        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+                        //line name to be updated 
+                        var childNodeNameLine = "line-"+ tempString;
+        
+                        //redraw line with new coordinates
+                        updateLineSvg(tempNodeNameObj["lineStartX"],tempNodeNameObj["lineStartY"],tempNodeNameObj["lineEndX"],tempNodeNameObj["lineEndY"],childNodeNameLine);
+                    }
+                }
+            }
+        });
+    }
+</script>    
+</body>
+</html>
