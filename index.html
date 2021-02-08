@@ -11,6 +11,7 @@
 - add font and border color to nodes - v22
 - add touch controls - v24/v25
 - add delete option
+- add fix for firefox bug - drag and move/drop - v37
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -25,6 +26,7 @@ html, body {
     margin: 0px;
     position:absolute;
     background-color: rgb(240, 240, 240);
+    overscroll-behavior: none;
     }
 
 .defaultButton {
@@ -51,10 +53,17 @@ html, body {
     border-bottom-left-radius: 5% 10%;
     border-top-left-radius: 5% 10%;
     border-bottom-right-radius: 5% 10%;
-    
     opacity: 1.0;
-    font-size:10px; 
+    font-size:10px;
+    -webkit-webkit-user-drag: element; 
+    overscroll-behavior: none;
+    overflow: visible;
 }
+
+.defaultNode:-webkit-drag {
+    background-color: red;
+}
+
 
 </style>
 </head>
@@ -74,6 +83,8 @@ html, body {
 <input type="file" accept="text/json" id="importLocalStorage" style="display: none;"></input>
 <button type="button" class="defaultButton" id="addNode">Create Node</button>
 <button type="button" class="defaultButton" id="checkDateTimeId">Check JSON File Date/Time</button>
+<!--for IPADS-->
+<button type="button" class="defaultButton" id="menuLaunch">Menu</button>
 
 <script>
 //Use Strict
@@ -137,6 +148,8 @@ else if (browserReport.search("chrome") != -1){
   document.getElementById("exportLocalStorage").addEventListener("click", exportLocalStorage);
   //export a local storage click
   document.getElementById("importLocalStorage").addEventListener("change", importLocalStorage);  
+  //Show Menu - Ipad - click  
+  document.getElementById("menuLaunch").addEventListener("click", createTouchForm);
 
   var localStorageKeyName; 
 
@@ -148,12 +161,37 @@ else if (browserReport.search("chrome") != -1){
   //hover modal test
   document.addEventListener("contextmenu",createForm);
 
-//TOUCH EVENTS//
 
-//for touch
-document.addEventListener('touchstart', createNodeTouchEvent, {passive: false});
-//document.addEventListener("touchmove", createMoveNode);
-//
+
+
+
+//TOUCH EVENTS//
+document.addEventListener("touchstart", touch2Mouse,{passive: false});
+//TOUCH EVENTS//
+document.addEventListener("touchmove", touch2Mouse,{passive: false});
+//TOUCH EVENTS//
+document.addEventListener("touchend", touch2Mouse,{passive: false});
+
+function touch2Mouse(e)
+{
+  var theTouch = e.changedTouches[0];
+  var mouseEv;
+
+  switch(e.type)
+  {
+    case "touchstart": mouseEv="dragstart"; break;  
+    case "touchend":   mouseEv="dragend"; break;
+    case "touchmove":  mouseEv="drag"; break;
+    default: return;
+  }
+
+  var mouseEvent = document.createEvent("MouseEvent");
+  mouseEvent.initMouseEvent(mouseEv, true, true, window, 1, theTouch.screenX, theTouch.screenY, theTouch.clientX, theTouch.clientY, false, false, false, false, 0, null);
+  theTouch.target.dispatchEvent(mouseEvent);
+
+  //e.preventDefault();
+}
+
 
 function checkFileDateTime(e){
     var getDateTimeString = window.prompt("Enter date time string on te end of the filename", "String?");
@@ -174,49 +212,6 @@ function checkFileDateTime(e){
 
 }
 
-//DEBUG Touch Events
-function createNodeTouchEvent(event){
-    // event.preventDefault();
-    console.log(event);
-    //create a search term
-    var searchItem = event.target.id;
-    //check where the touch start event occurred
-    //load local storage
-    if (event.target.id == "loadLocalStorage"){
-        loadLocalStorage();
-    }
-
-    //create local storage    
-    if (event.target.id == "createLocalStorage"){
-        createLocalStorage();
-    }
-
-    //create local storage    
-    if (event.target.id == "exportLocalStorage"){
-        exportLocalStorage();
-        //click link after its created
-        if (event.target.id == "downloadLink"){
-            
-        }
-    }
-
-    //create local storage    
-    if (event.target.id == "createLocalStorage"){
-        createLocalStorage();
-    }
-
-    //create local storage    
-    if (event.target.id == "addNode"){
-        createNode();
-    }
-
-    if (searchItem.search("node") != -1){
-        //document.addEventListener("touchmove", createTouchMoveNode);
-        createTouchMoveNode();
-    }
-
-}
-
 
  function exportLocalStorage(e){
     //Debug and log event messages from change click
@@ -227,7 +222,7 @@ function createNodeTouchEvent(event){
     //turn into a string
     var mfJsonString = JSON.stringify(mfJson);
     //base64 encode it for saving toa  file
-    var mfJsonStringBase64 = btoa(mfJsonString);
+    var mfJsonStringBase64 = btoa(encodeURIComponent(mfJsonString));
     //create a link ready for download
     var downloadLink = document.createElement("a");
     //get the current date since epoch
@@ -288,7 +283,7 @@ function importLocalStorage(e){
             var mfJsonStringBase64 = reader.result;
             //Debug - base64 file
             //decode file from base64
-            var mfJsonString = atob(mfJsonStringBase64);
+            var mfJsonString = decodeURIComponent(atob(mfJsonStringBase64));
             //create object to extract version
             var mfJsonObj = JSON.parse(mfJsonString);
             //set the key name from original obj
@@ -423,6 +418,344 @@ function createForm(e) {
           x.remove();
       }
     
+        var br = document.createElement("br"); 
+        // Create a form synamically 
+        var form = document.createElement("form"); 
+        form.setAttribute("id", "formDivContainer"); 
+        
+        form.style.position = "absolute";
+        form.style.backgroundColor = "lightgrey";
+        form.style.borderStyle = "none";
+        form.style.width = 190 +"px";
+        //form.style.left = 200 +"px";
+        ///console.log(e);
+        // Create an input element for nodeid 
+        var formNodeId = document.createElement("input");
+        formNodeId.setAttribute("id", "formNodeId");  
+        formNodeId.setAttribute("type", "text"); 
+        formNodeId.setAttribute("name", "formNodeId"); 
+        formNodeId.setAttribute("placeholder", e.target.id); 
+        formNodeId.setAttribute("value", e.target.id); 
+        
+
+        //formNodeId.style.position = "relative";
+        formNodeId.style.backgroundColor = "lightgrey";
+        //formNodeId.style.top = (e.clientY+20) +"px";
+        //formNodeId.style.left = (e.clientX+20) +"px";
+        
+        // Append the full name input to the form 
+        form.appendChild(formNodeId);  
+        
+        //get node id text value
+        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::e.target.id.value:::",e.target.id);
+        var formNodeTextId = document.getElementById(e.target.id);
+        var formNodeTextValue = formNodeTextId.value;
+        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::formNodeTextValue:::",formNodeTextValue);
+      
+        // Create an input element for password 
+        var formNodeText = document.createElement("input");
+        formNodeText.setAttribute("id", "formNodeText");  
+        formNodeText.setAttribute("type", "text"); 
+        formNodeText.setAttribute("name", "formNodeText"); 
+        formNodeText.setAttribute("placeholder", formNodeTextValue); 
+        
+        //formNodeText.style.position = "relative";
+        formNodeText.style.backgroundColor = "lightgrey";
+        //formNodeText.style.top = e.clientY +"px";
+        //formNodeText.style.left = e.clientX +"px";
+
+        // Append the node text 
+        form.appendChild(formNodeText);  
+        
+
+        // create a submit button 
+        var s = document.createElement("input"); 
+        s.setAttribute("id", "submitClose"); 
+        s.setAttribute("type", "button"); 
+        s.setAttribute("value", "Close"); 
+        s.style.backgroundColor = "green";
+        // Append the submit button to the form 
+        form.appendChild(s); 
+        form.appendChild(br.cloneNode());  
+
+        //hide/unhide child nodes
+        var hideUnhideChild = document.createElement("input"); 
+        hideUnhideChild.setAttribute("id", "submitHideUnhide"); 
+        hideUnhideChild.setAttribute("type", "button"); 
+        hideUnhideChild.setAttribute("value", "Hide/Unhide Child"); 
+        hideUnhideChild.style.backgroundColor = "orange";
+        // Append the submit button to the form 
+        form.appendChild(hideUnhideChild); 
+        
+
+
+
+        //create a add child node button (and a line)
+        // create a submit button 
+        var createChildNodeButton = document.createElement("input"); 
+        createChildNodeButton.setAttribute("id", "createChildNodeButton"); 
+        createChildNodeButton.setAttribute("type", "button"); 
+        createChildNodeButton.setAttribute("value", "Create Child Node"); 
+        
+        //createChildNodeButton.style.position = "relative";
+        createChildNodeButton.style.backgroundColor = "yellow";
+        //createChildNodeButton.style.top = e.clientY +"px";
+        //createChildNodeButton.style.left = e.clientX +"px";
+
+            
+        // Inserting a line break 
+        form.appendChild(br.cloneNode());  
+
+        // Append the Password to the form 
+        form.appendChild(formNodeText);  
+        form.appendChild(br.cloneNode());  
+            
+        
+        // Append the submit button to the form 
+        form.appendChild(createChildNodeButton);  
+
+        //DEBUG///////////////////////////////////////////////
+        form.appendChild(br.cloneNode()); 
+        var bgColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','gold','lime','green','lightblue','blue','orange','pink','brown'];
+        var fontColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','gold','lime','green','lightblue','blue','orange','pink','brown'];
+        var borderColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','gold','lime','green','lightblue','blue','orange','pink','brown'];
+        
+        //create background css id
+        var bgColorNodeId = "bgcolor-"+nodeSearch;
+        //create background css id
+        var fontColorNodeId = "fontcolor-"+nodeSearch;
+        //create background css id
+        var borderColorNodeId = "bordercolor-"+nodeSearch;
+        
+
+        //background color select statement - simple version - no rgb
+        var selectBgColor = document.createElement('select');
+        selectBgColor.setAttribute("name",bgColorNodeId);
+        selectBgColor.setAttribute("id",bgColorNodeId);
+
+        //font color select statement - simple version - no rgb
+        var selectFontColor = document.createElement('select');
+        selectFontColor.setAttribute("name",fontColorNodeId);
+        selectFontColor.setAttribute("id",fontColorNodeId);
+
+        //background color select statement - simple version - no rgb
+        var selectBorderColor = document.createElement('select');
+        selectBorderColor.setAttribute("name",borderColorNodeId);
+        selectBorderColor.setAttribute("id",borderColorNodeId);
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
+
+        // Append to the form 
+        form.appendChild(selectBgColor);
+        form.appendChild(br.cloneNode()); 
+        
+        form.appendChild(selectFontColor);
+        form.appendChild(br.cloneNode()); 
+        
+        form.appendChild(selectBorderColor);
+        form.appendChild(br.cloneNode()); 
+        
+        //background colour choice//
+		var bgColorOption = document.createElement('option');
+		bgColorOption.value = "white";
+		bgColorOption.text = "Choose Background Color";
+		selectBgColor.appendChild(bgColorOption);
+        //Create color Choices
+        for (var i = 0; i < bgColorChoice.length; i++){
+	        var bgColorOption = document.createElement('option');
+		    bgColorOption.value = bgColorChoice[i];
+			bgColorOption.text = bgColorChoice[i];
+		    selectBgColor.appendChild(bgColorOption);
+		}
+
+        //node font colour choice//
+        var fontColorOption = document.createElement('option');
+		fontColorOption.value = "black";
+		fontColorOption.text = "Choose font Color";
+		selectFontColor.appendChild(fontColorOption);
+        //Create color Choices
+        for (var i = 0; i < fontColorChoice.length; i++){
+	        var fontColorOption = document.createElement('option');
+		    fontColorOption.value = fontColorChoice[i];
+			fontColorOption.text = fontColorChoice[i];
+		    selectFontColor.appendChild(fontColorOption);
+		}
+
+        //border colour choice//
+		var borderColorOption = document.createElement('option');
+		borderColorOption.value = "black";
+		borderColorOption.text = "Choose border Color";
+		selectBorderColor.appendChild(borderColorOption);
+        //Create color Choices
+        for (var i = 0; i < borderColorChoice.length; i++){
+	        var borderColorOption = document.createElement('option');
+		    borderColorOption.value = borderColorChoice[i];
+			borderColorOption.text = borderColorChoice[i];
+		    selectBorderColor.appendChild(borderColorOption);
+		}
+        form.appendChild(br.cloneNode()); 
+        //delete
+        // create a submit button 
+        var d = document.createElement("input"); 
+        d.setAttribute("id", "deleteNodeButton"); 
+        d.setAttribute("type", "button"); 
+        d.setAttribute("value", "Delete Node"); 
+        
+
+        //s.style.position = "absolute";
+        d.style.backgroundColor = "red";
+        //s.style.top = e.clientY +"px";
+        //s.style.left = e.clientX +"px";
+
+        // Append the submit button to the form 
+        form.appendChild(d); 
+        form.appendChild(br.cloneNode());  
+        //form.appendChild(selectBgColor);
+        form.appendChild(br.cloneNode()); 
+        document.getElementsByTagName("body")[0].appendChild(form); 
+        //document.getElementById("formDiv").appendChild("formDivContainer");
+        var f = document.getElementById("formDivContainer") 
+        f.style.postion = "relative";
+        f.style.left = (e.clientX+20)+"px";
+        f.style.top = (e.clientY+20)+"px";
+
+        document.getElementById("submitClose").addEventListener("click", deleteForm);
+        document.getElementById("submitHideUnhide").addEventListener("click", () =>{
+            hideUnhideChildNodes(nodeSearch);
+
+        });
+
+
+
+        document.getElementById("createChildNodeButton").addEventListener("click", createChildNode); 
+        document.getElementById("deleteNodeButton").addEventListener("click",() =>{
+                deleteNode(nodeSearch);
+                deleteForm();
+            
+        });
+        //Get color and change it for the node and save in localstorage
+        document.getElementById(bgColorNodeId).addEventListener("change", () => {
+            //load current node element and then change bg color
+            var bgColorDropDown = document.getElementById(bgColorNodeId);
+            var currentNode = document.getElementById(nodeSearch);
+            currentNode.style.backgroundColor = bgColorDropDown.value;
+            //console.log("color value:::",bgColorDropDown.value);
+            
+            //save to localstorage 
+
+
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
+            tempNodeSearchObj["bgNodeColor"] = bgColorDropDown.value;
+            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
+            //make a string out of the child object
+            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
+            //save coords string into node name line
+            mfJson[nodeSearch] = tempNodeSearchString;
+            
+            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+        });
+
+        //Get color and change it for the node and save in localstorage
+        document.getElementById(fontColorNodeId).addEventListener("change", () => {
+            //load current node element and then change bg color
+            var fontColorDropDown = document.getElementById(fontColorNodeId);
+            var currentNode = document.getElementById(nodeSearch);
+            currentNode.style.color = fontColorDropDown.value;
+            //console.log("color value:::",bgColorDropDown.value);
+            
+            //save to localstorage 
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
+            tempNodeSearchObj["fontNodeColor"] = fontColorDropDown.value;
+            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
+            //make a string out of the child object
+            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
+            //save coords string into node name line
+            mfJson[nodeSearch] = tempNodeSearchString;
+            
+            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+        });
+
+        //Get color and change it for the node and save in localstorage
+        document.getElementById(borderColorNodeId).addEventListener("change", () => {
+            //load current node element and then change bg color
+            var borderColorDropDown = document.getElementById(borderColorNodeId);
+            var currentNode = document.getElementById(nodeSearch);
+            currentNode.style.borderColor = borderColorDropDown.value;
+            //console.log("color value:::",bgColorDropDown.value);
+            try {
+                //DEBUG SVG line color change
+                var tempLineNodeId = "line-"+nodeSearch;
+                var tempLineNode = document.getElementById(tempLineNodeId);
+            
+                tempLineNode.setAttribute("stroke", borderColorDropDown.value);
+            }
+            catch {
+                console.log("ERROR:::Unable to update line color - must be a Parent Node.")   
+            }
+            //save to localstorage
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
+            tempNodeSearchObj["borderNodeColor"] = borderColorDropDown.value;
+            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
+            //make a string out of the child object
+            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
+            //save coords string into node name line
+            mfJson[nodeSearch] = tempNodeSearchString;
+            
+            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+        });
+    }
+            
+} 
+
+function hideUnhideChildNodes(nodeSearch){
+    console.log("childHideUnhide:::",nodeSearch);
+    var tempNodeParent = document.getElementById(nodeSearch);
+    if (tempNodeParent.style.border == "unset") {
+        tempNodeParent.style.border = "5px double blue";
+    }
+    else if (tempNodeParent.style.border == "5px double blue"){
+        tempNodeParent.style.border = "1px solid black";
+    }  
+    else{
+        tempNodeParent.style.border = "unset";
+    }
+    //if tempNodeParent.style.display = "none"
+
+}
+
+
+function createTouchForm(e) { 
+   e.preventDefault();
+  var nodeSearch = e.target.id;
+    //console.log("createForm Search:::",nodeSearch);
+    /*if (nodeSearch.search("node") != -1){
+      //check if form exists - if so delete
+      let formDom = document.getElementById("formDivContainer");
+      if (formDom !== null){
+          while (formDom.firstChild) {
+              formDom.removeChild(formDom.firstChild);
+          }
+
+          var x = document.getElementById("formDivContainer");
+          ///console.log("Form=",x);
+          x.remove();
+      }
+    */
         var br = document.createElement("br"); 
         // Create a form synamically 
         var form = document.createElement("form"); 
@@ -711,9 +1044,7 @@ function createForm(e) {
             //store nodename key
             localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
         });
-    }
-            
-} 
+}
 
 function deleteNode(nodeSearch){
 
@@ -961,6 +1292,8 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine){
         svgElem.setAttributeNS(null, "height", boxHeight);
         svgElem.setAttributeNS(null,"id","svgDivId")
         svgElem.style.display = "block";
+        //for chrome mobile - make svg s appear even if off the screen.
+        svgElem.style.overflow = "visible";
 
         var svgId = document.getElementById("svgParent");
         svgId.appendChild(svgElem);
@@ -1035,6 +1368,7 @@ if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || 
         svgElem.setAttributeNS(null, "height", boxHeight);
         svgElem.setAttributeNS(null,"id","svgDivId")
         svgElem.style.display = "block";
+        svgElem.style.overflow = "visible";
 
         var svgId = document.getElementById("svgParent");
         svgId.appendChild(svgElem);
@@ -1476,12 +1810,15 @@ function createMoveNode(e){
 
     var moveXY = document.getElementById(e.target.id);
     e.target.style.cursor = "pointer";
-    //DEBUG
-        var startX = e.pageX;
-        var startY = e.pageY;
-        console.log("Click Event startX and StartY:",startX,startY);
+
     
-    let coordsMove = moveXY.getBoundingClientRect();
+            //DEBUG
+            var startX = e.pageX;
+            var startY = e.pageY;
+            console.log("Click Event startX and StartY:",startX,startY);
+
+
+    var coordsMove = moveXY.getBoundingClientRect();
 
     //calculate the difference between the top/left corner and where the click down drag occurred
     //Really important as it allows the trueup of the corners without clicking exactly on the corner when dragging
@@ -1489,6 +1826,12 @@ function createMoveNode(e){
     let deviationY = startY - coordsMove.top;
 
     console.log("DEBUG: DEVIATION from corner for X and Y is:", deviationX,deviationY);
+    
+    
+    
+    
+
+
     //only required for debug to watch moving coords
     moveXY.addEventListener("drag", (e) => {
         //e.preventDefault();
@@ -1783,187 +2126,7 @@ function createMoveNode(e){
         console.log("versionControlLog status:::",versionControlBool);
     }
 }
-
-//Touch Move
-
-function createTouchMoveNode(){
-    //setup an eventlistener for the touchend event
-    document.addEventListener("touchmove",(e) => {
-        //e.preventDefault();
-        //e.target.id = the node being moved
-        console.log("createTouchMoveNode --- Should be moving..............................................-->",e.target.id);
-    
-        ////////////////////////////////////////////////////////////////////////////
-        //get upstream lineEndX and lineEndY - node that moves
-        //get localstorage
-        let tempStringNodeId = e.target.id;
-        //only get the local storage node info if its a node
-        //if (tempStringNodeId.search("node") != -1){
-        if (tempStringNodeId.startsWith("node") === true){
-            let mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-            //getnodeName key and make an object from the string
-            var tempGetNodeNameObj = JSON.parse(mfJson[e.target.id]);
-            //from upstream parent
-            var tempLineEndX = tempGetNodeNameObj["lineEndX"];
-            var tempLineEndY = tempGetNodeNameObj["lineEndY"];
-        }
-        ////////////////////////////////////////////////////////////////////////////    
-
-        var moveXY = document.getElementById(e.target.id);
-        e.target.style.cursor = "pointer";
-
-        //DEBUG Touch -- fork in the road
-        var touchCount = e.touches.length;
-
-            var startX = e.touches[0].clientX;
-            var startY = e.touches[0].clientY;
-            console.log("Touch Event startX and Touch StartY:",startX,startY);
-
-            let coordsMove = moveXY.getBoundingClientRect();
-            //calculate the difference between the top/left corner and where the click down drag occurred
-            //Really important as it allows the trueup of the corners without clicking exactly on the corner when dragging
-            let deviationX = startX - coordsMove.left;
-            let deviationY = startY - coordsMove.top;
-            console.log("DEBUG: TOUCH ::: DEVIATION from corner for X and Y is:", deviationX,deviationY);
-
-        //DEBUG - log movements of clientx and clienty
-            console.log("X client cords = ",e.touches[0].clientX,"Y client cords = ",e.touches[0].clientY);
-            console.log("X screen cords = ",e.touches[0].screenX,"Y screen cords = ",e.touches[0].screenY);
-    
-        
-        //setup an eventlistener for the touchend event
-        
-            //stop any defualt actions of touchend
-            //e.preventDefault();
-            //e.target.style.cursor = "pointer";
-             
-            console.log("Touch Events:::",e);
-
-            console.log("X client cords = ",e.changedTouches[0].clientX,"Y client cords = ",e.changedTouches[0].clientY);
-            console.log("X screen cords = ",e.changedTouches[0].screenX,"Y screen cords = ",e.changedTouches[0].screenY);
-
-            moveXY.style.left = (e.changedTouches[0].clientX - deviationX) + "px";
-            moveXY.style.top = (e.changedTouches[0].clientY - deviationY) + "px";
-    
-            console.log("moveXY:::",moveXY);
-      
-            console.log("X/left corner of node",moveXY.style.left);
-            console.log("Y/top corner of node",moveXY.style.top);
-    
-            //Store each node as a subset of the localstorage and stringify all of it.
-            //load storage vars so can append
-            //save to local storage
-            var nodeCoordsObj = moveXY.getBoundingClientRect();
-            //work out line start coords from the parent coords
-            let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
-            let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
-        
-        
-            console.log("lineEndX for Parent or startx of child",lineEndX);
-            console.log("lineEndY for Parent or startY of child",lineEndY);
-        
-            //add the node coords 
-            //initialise temp object
-            var tempNodeObj = {};
-            tempNodeObj["x"] = nodeCoordsObj.x;
-            tempNodeObj["y"] = nodeCoordsObj.y;
-            tempNodeObj["left"] = nodeCoordsObj.left;
-            tempNodeObj["top"] = nodeCoordsObj.top;
-            tempNodeObj["width"] = nodeCoordsObj.width;
-            tempNodeObj["height"] = nodeCoordsObj.height;
-            tempNodeObj["right"] = nodeCoordsObj.right;
-            tempNodeObj["bottom"] = nodeCoordsObj.bottom;
-            
-            //get localstorage
-            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-       
-            //getnodeName key and make an object from the string
-            var nodeNameObj = JSON.parse(mfJson[e.target.id]);
-            //console.log("nodeNameObj after loading from local storage before object move:::",nodeNameObj);
-            var input = nodeNameObj["nodeText"];
-         
-            //load back new cooords and data
-            tempNodeObj["nodeText"] = input;
-            //add back into the object the node type - parent/child
-            tempNodeObj["nodeType"] = nodeNameObj["nodeType"];
-            //load color
-            tempNodeObj["bgNodeColor"] = nodeNameObj["bgNodeColor"];
-            tempNodeObj["fontNodeColor"] = nodeNameObj["fontNodeColor"];
-            tempNodeObj["borderNodeColor"] = nodeNameObj["borderNodeColor"];
-
-            //parent coords dont change
-            tempNodeObj["lineEndX"] = lineEndX;
-            tempNodeObj["lineEndY"] = lineEndY;
-        
-            if (nodeNameObj["nodeType"] == "child"){
-        
-                tempNodeObj["lineStartX"] = nodeNameObj["lineStartX"];
-                tempNodeObj["lineStartY"] = nodeNameObj["lineStartY"];
-        
-                //line name to be updated 
-                var childNodeNameLine = "line-"+ e.target.id;
-        
-                //redraw line with new coordinates
-                updateLineSvg(nodeNameObj["lineStartX"],nodeNameObj["lineStartY"],lineEndX,lineEndY,childNodeNameLine);
-                //debug
-                //console.log("tempNodeObj after running updateLineSVG:::",tempNodeObj);
-            
-            }
-            var tempNodeString = JSON.stringify(tempNodeObj);
-            mfJson[e.target.id] = tempNodeString;
-        
-            //console.log("mfJson[e.target.id]",mfJson[e.target.id]);
-            //store nodename key
-            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-
-            //////////////////////////////////////////////////////////////////
-            //Update all child nodes attached to the upstream parent so they are not orphaned
-            //load all nodes
-            var n = Object.keys(mfJson).length;
-            var keysLocalStorageArray = Object.keys(mfJson);
-            //DEBUG
-            //console.log("kEYS#=",n);
-            //console.log("ARRAY#=",keysLocalStorageArray);
-            for (var i=0;i < n;i++){
-
-                let tempString = keysLocalStorageArray[i];
-        
-                //iterate over and only update nodes
-                //if (tempString.search("node") != -1){
-                if (tempString.startsWith("node") === true){
-                    //console.log("Node:",tempString);
-                    //get localstorage
-                    //var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-                    //getnodeName key and make an object from the string
-                    var tempNodeNameObj = JSON.parse(mfJson[tempString]);
-                    //console.log('tempNodeNameObj[lineStartX]',tempNodeNameObj["lineStartX"]);
-                    //console.log('nodeNameObj[lineEndX]',nodeNameObj["lineEndX"]);
-                
-                    if (((tempNodeNameObj["lineStartX"] == tempLineEndX) || ((tempNodeNameObj["lineStartX"] >= (tempLineEndX-10)) && (tempNodeNameObj["lineStartX"] <= (tempLineEndX+10)))) && ((tempNodeNameObj["lineStartY"] == tempLineEndY) || ((tempNodeNameObj["lineStartY"] >= (tempLineEndY-10)) && (tempNodeNameObj["lineStartY"] <= (tempLineEndY+10))))) {
-                        //console.log("This node Qualifies:::",tempNodeNameObj);
-                    
-                        //double check node line corrods being stored
-                        var mfJsonTemp = JSON.parse(localStorage.getItem(localStorageKeyName));
-                        //getnodeName key and make an object from the string
-                        var nodeMovingTemp = JSON.parse(mfJsonTemp[e.target.id]);
-                        //update lineStartX and LineStartY
-                        tempNodeNameObj["lineStartX"] = nodeMovingTemp["lineEndX"];
-                        tempNodeNameObj["lineStartY"] = nodeMovingTemp["lineEndY"];
-                    
-                        //store nodename key
-                        var tempNodeNameString = JSON.stringify(tempNodeNameObj);
-                        mfJson[tempString] = tempNodeNameString;
-                        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-                        //line name to be updated 
-                        var childNodeNameLine = "line-"+ tempString;
-        
-                        //redraw line with new coordinates
-                        updateLineSvg(tempNodeNameObj["lineStartX"],tempNodeNameObj["lineStartY"],tempNodeNameObj["lineEndX"],tempNodeNameObj["lineEndY"],childNodeNameLine);
-                    }
-                }
-            }
-        });
-    }
 </script>    
 </body>
 </html>
+
