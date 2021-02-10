@@ -1580,7 +1580,7 @@ function loadLocalStorage(e){
                 var keysLineTempArray = Object.keys(lineJsonTempObj);
                 console.log("var keysLineTempArray:::",keysLineTempArray);
                 for (var k=0;k < p;k++){
-                    //try {
+                    try {
                         var tempDivString = keysLineTempArray[k];
                         console.log("PARENT DIV ID:::",tempString);
                         //this parent div was created as above
@@ -1600,8 +1600,8 @@ function loadLocalStorage(e){
                         retrieveSavedNodeFromLocalStorage(tempParentNodeId,tempChildNodeId,result)
                         var tempNodeChildSet = document.getElementById(tempChildNodeId);
                         nodeDivTempChild.appendChild(tempNodeChildSet);
-                    //}
-                    //catch {console.log("Something went wrong");}    
+                    }
+                    catch {console.log("Something went wrong");}    
                 }
             }    
         }
@@ -2152,5 +2152,6 @@ function createMoveNode(e){
 </script>    
 </body>
 </html>
+
 
 
