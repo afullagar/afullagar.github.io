@@ -11,8 +11,6 @@
 - add font and border color to nodes - v22
 - add touch controls - v24/v25
 - add delete option
-- add fix for firefox bug - drag and move/drop - v37
-- add encode/decode URI component for btoa/atob base64 - v40
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -25,7 +23,7 @@ html, body {
     width: 100%;
     height: 100%;
     margin: 0px;
-    position:absolute;
+    /*position:absolute;*/
     background-color: rgb(240, 240, 240);
     overscroll-behavior: none;
     }
@@ -44,7 +42,7 @@ html, body {
 .defaultNode {
     /*border-radius: 10px;*/
     margin: 0px;
-    padding:0px;
+    padding:5px;
     /*this setting allows textarea to expand and contract.*/
     resize:both;
     text-align: left;
@@ -122,10 +120,10 @@ if (browserReport.search("firefox") != -1){
     });
 }
 else if (browserReport.search("edg") != -1){
-    console.log("Browser appears to be Edge. ClientX/Y and PageX/Y is shoudl work ok!");
+    console.log("Browser appears to be Edge. ClientX/Y and PageX/Y is should work ok!");
 }
 else if (browserReport.search("chrome") != -1){
-    console.log("Browser appears to be Chrome. ClientX/Y and PageX/Y is shoudl work ok!");
+    console.log("Browser appears to be Chrome. ClientX/Y and PageX/Y is should work ok!");
 }
 
 
@@ -311,6 +309,7 @@ function importLocalStorage(e){
 
         //load all nodes
         var n = Object.keys(mfJson).length;
+        //create an array of keys (line items from local storage)
         var keysLocalStorageArray = Object.keys(mfJson);
         //DEBUG
         console.log("kEYS#=",n);
@@ -338,7 +337,8 @@ function importLocalStorage(e){
                     nodeDivTemp.setAttribute("id",divNameId);
                     //append to document
                     document.body.appendChild(nodeDivTemp);
-                    retrieveSavedNodeFromLocalStorage(tempNode,result)
+                    var parentPlaceholder = "parent";
+                    retrieveSavedNodeFromLocalStorage(parentPlaceholder,tempNode,result)
                     var tempNodeSet = document.getElementById(tempNode);
                     nodeDivTemp.appendChild(tempNodeSet);
                     //Load the child div names and create relative to parent
@@ -356,10 +356,10 @@ function importLocalStorage(e){
                         nodeDivTempChild.setAttribute("id",divNameId);
                         //append to document
                         nodeDivTemp.appendChild(nodeDivTempChild);
-
+                        var parentPlaceholder = "parent";
                         //get the child node
                         var tempChildNode = divNameId.replace("div-","");
-                        retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                        retrieveSavedNodeFromLocalStorage(parentPlaceholder,tempChildNode,result);
                         var tempNodeChildSet = document.getElementById(tempChildNode);
                         nodeDivTempChild.appendChild(tempNodeChildSet);
 
@@ -392,9 +392,17 @@ function importLocalStorage(e){
 
                         //get the child node
                         var tempChildNode = divNameChildId.replace("div-","");
-                        retrieveSavedNodeFromLocalStorage(tempChildNode,result)
-                        var tempNodeChildSet = document.getElementById(tempChildNode);
-                        nodeDivTempChild.appendChild(tempNodeChildSet); 
+
+                        //get parent 
+                        var tempParentNodeId = tempString.replace("div-","");
+                        //try{
+                            retrieveSavedNodeFromLocalStorage(tempParentNodeId,tempChildNode,result);
+                            var tempNodeChildSet = document.getElementById(tempChildNode);
+                            nodeDivTempChild.appendChild(tempNodeChildSet);
+                        //}
+                        //catch{
+                        //    console.log("Something went wrong with accessing the retrieveSavedNodeFromLocalStorage");        
+                        //}
                     }
                 }   
             }
@@ -728,15 +736,81 @@ function hideUnhideChildNodes(nodeSearch){
     var tempNodeParent = document.getElementById(nodeSearch);
     if (tempNodeParent.style.border == "unset") {
         tempNodeParent.style.border = "5px double blue";
+        try {//load storage vars so can append
+            var mfJsonObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeDiv = "div-"+nodeSearch;
+            var tempNodeDivObj = JSON.parse(mfJsonObj[tempNodeDiv]); 
+            //load all nodes
+            var n = Object.keys(tempNodeDivObj).length;
+            var tempNodeDivObjArray = Object.keys(tempNodeDivObj);
+            //DEBUG
+            console.log("kEYS#=",n);
+            console.log("ARRAY#=",tempNodeDivObjArray);
+            for (var i=0;i < n;i++){
+                console.log(tempNodeDivObjArray[i]);
+                var tempString = tempNodeDivObjArray[i];
+                var x = document.getElementById(tempString);
+                x.style.display = "none";
+                console.log(x);
+
+                //hide svg lines
+                var tempSvgLine = "line-"+tempString.replace("div-","");
+                console.log("changed to:::",tempSvgLine);
+                var y = document.getElementById(tempSvgLine);
+                y.style.display = "none";
+
+                //hide svg lines
+                var tempDivSvgLine = "div-line-"+tempString.replace("div-","");
+                console.log("changed to:::",tempDivSvgLine);
+                var z = document.getElementById(tempDivSvgLine);
+                z.style.display = "none";
+
+            }
+        }
+        catch{
+            console.log("Unable to hide child nodes");
+        }
     }
     else if (tempNodeParent.style.border == "5px double blue"){
         tempNodeParent.style.border = "1px solid black";
+        try {//load storage vars so can append
+            var mfJsonObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeDiv = "div-"+nodeSearch;
+            var tempNodeDivObj = JSON.parse(mfJsonObj[tempNodeDiv]); 
+            //load all nodes
+            var n = Object.keys(tempNodeDivObj).length;
+            var tempNodeDivObjArray = Object.keys(tempNodeDivObj);
+            //DEBUG
+            console.log("kEYS#=",n);
+            console.log("ARRAY#=",tempNodeDivObjArray);
+            for (var i=0;i < n;i++){
+                console.log(tempNodeDivObjArray[i]);
+                var tempString = tempNodeDivObjArray[i];
+                var x = document.getElementById(tempString);
+                x.style.display = "unset";
+                console.log(x);
+
+                //hide svg lines
+                var tempSvgLine = "line-"+tempString.replace("div-","");
+                console.log("changed to:::",tempSvgLine);
+                var y = document.getElementById(tempSvgLine);
+                y.style.display = "unset";
+
+                //hide svg lines
+                var tempDivSvgLine = "div-line-"+tempString.replace("div-","");
+                console.log("changed to:::",tempDivSvgLine);
+                var z = document.getElementById(tempDivSvgLine);
+                z.style.display = "unset";
+
+            }
+        }
+        catch{
+            console.log("Unable to hide child nodes");
+        }
     }  
     else{
         tempNodeParent.style.border = "unset";
     }
-    //if tempNodeParent.style.display = "none"
-
 }
 
 
@@ -1154,6 +1228,7 @@ function createChildNode(e){
     var childDivNameId = "div-"+ childNodeName;
     console.log("childDivNameId:::",childDivNameId);
     childDiv.setAttribute("id",childDivNameId);
+    
     console.log("childDiv:::",childDiv);
 
     //append to document
@@ -1187,10 +1262,10 @@ function createChildNode(e){
     console.log("lineEndX/Y",lineEndX,":::",lineEndY);
     //create the naem for the line that connects from child to parent node
     var childNodeNameLine = "line-"+childNodeName;
-    
+    var childDivNameLine = "div-"+childNodeNameLine;
     //draw a canvas line 
     //drawLineCanvas(lineStartX,lineStartY,lineEndX,lineEndY);
-    drawLineSvg(lineStartX,lineStartY,lineEndX,lineEndY,nodeBorderColor,childNodeNameLine);
+    drawLineSvg(lineStartX,lineStartY,lineEndX,lineEndY,nodeBorderColor,currentParentNodeId,childNodeNameLine,childDivNameLine);
 
     //Store each node as a subset of the localstorage and stringify all of it.
     //load storage vars so can append
@@ -1252,23 +1327,10 @@ function createChildNode(e){
     console.log("mfJson[nodeName]",mfJson[childNodeName]);
     //store nodename key
     localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-/*
-     //only log continuously if true
-     if (versionControlBool === true){
-        if (childNodeName.startsWith("node") === true){
-            //DEBUG - Continous save
-            exportLocalStorage();
-            console.log("export backup:::createChildNode");
-        }
-    }
-    else{
-        console.log("versionControlLog status:::",versionControlBool);
-    }
-*/
 }
 
 //draws a line from child to parent and stores it in local storage
-function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine){
+function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,currentParentNodeId,childNodeNameLine,childDivNameLine){
     //catch cords empty or undefined - DEBUG for now becuase cannot find the issue
     if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || yEnd !== 'undefined' || childNodeNameLine !== 'undefined'){
 
@@ -1278,6 +1340,8 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine){
     
     var xmlns = "http://www.w3.org/2000/svg";
     var svgElem = document.getElementById("svgDivId");
+
+   
     //var svgElemStatus = document.getElementById("svgParent").contains(svg);
     //console.log("svgElem status:::",svgElem);
     //check if it exists
@@ -1298,8 +1362,33 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine){
 
         var svgId = document.getElementById("svgParent");
         svgId.appendChild(svgElem);
+
+         //create parent line DIV
+        //DEBUG:::DIV
+        var parentDivLineId = "div-line-"+currentParentNodeId;
+        var parentDivTemp = document.createElementNS(xmlns,"g");
+        console.log("childDivNameId:::",parentDivLineId);
+        parentDivTemp.setAttribute("id",parentDivLineId);
+
+        //append to document
+        svgElem.appendChild(parentDivTemp);
+  
     }
-    
+         //create parent line DIV
+        //DEBUG:::DIV
+        var parentDivLineId = "div-line-"+currentParentNodeId;
+        var parentDivTemp = document.getElementById(parentDivLineId)
+        console.log("childDivNameId:::",parentDivLineId);
+        parentDivTemp.setAttribute("id",parentDivLineId);
+
+        
+        //create child line DIV
+        //DEBUG:::DIV
+        var childDivTemp = document.createElementNS(xmlns,"g");
+        console.log("childDivNameId:::",childDivNameLine);
+        childDivTemp.setAttribute("id",childDivNameLine);
+        parentDivTemp.appendChild(childDivTemp);
+
         var newLine = document.createElementNS(xmlns,'line');
             newLine.setAttribute('id',childNodeNameLine);
             newLine.setAttribute('x1',xStart);
@@ -1307,42 +1396,7 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine){
             newLine.setAttribute('x2',xEnd);
             newLine.setAttribute('y2',yEnd);
             newLine.setAttribute("stroke", nodeBorderColor);
-            svgElem.append(newLine);
-/*
-        //DEBUG:::Circle
-        //side A
-        var circleMenuSvgId = "circle-"+childNodeNameLine;
-
-        var newCircleA = document.createElementNS(xmlns,'circle');
-        newCircleA.setAttribute('id',circleMenuSvgId);
-        newCircleA.setAttribute('cx',xStart);
-        newCircleA.setAttribute('cy',yStart);
-        newCircleA.setAttribute('r','10');
-        newCircleA.setAttribute('stroke-width','1');
-        newCircleA.setAttribute("stroke", "black");
-        newCircleA.setAttribute("fill", "none");
-
-        svgElem.append(newCircleA);
-
-        //DEBUG:::Circle
-        //Side B
-
-        var newCircleB = document.createElementNS(xmlns,'circle');
-        newCircleB.setAttribute('id',circleMenuSvgId);
-        newCircleB.setAttribute('cx',xEnd);
-        newCircleB.setAttribute('cy',yEnd);
-        newCircleB.setAttribute('r','10');
-        newCircleB.setAttribute('stroke-width','1');
-        newCircleB.setAttribute("stroke", "black");
-        newCircleB.setAttribute("fill", "none");
-
-        svgElem.append(newCircleB);
-
-        
-        
-        
-            //<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
-            */
+            childDivTemp.append(newLine);
     }
 }
 
@@ -1382,45 +1436,7 @@ if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || 
         existingLine.setAttribute('x2',xEnd);
         existingLine.setAttribute('y2',yEnd);
         //existingLine.setAttribute("stroke", "black")
-        svgElem.append(existingLine);
-/*
-         //DEBUG:::Circle
-        //side A
-        var circleMenuSvgId = "circle-"+childNodeNameLine;
-
-var newCircleA = document.createElementNS(xmlns,'circle');
-newCircleA.setAttribute('id',circleMenuSvgId);
-newCircleA.setAttribute('cx',xStart);
-newCircleA.setAttribute('cy',yStart);
-newCircleA.setAttribute('r','10');
-newCircleA.setAttribute('stroke-width','1');
-newCircleA.setAttribute("stroke", "black");
-newCircleA.setAttribute("fill", "none");
-
-svgElem.append(newCircleA);
-
-//DEBUG:::Circle
-//Side B
-
-var newCircleB = document.createElementNS(xmlns,'circle');
-newCircleB.setAttribute('id',circleMenuSvgId);
-newCircleB.setAttribute('cx',xEnd);
-newCircleB.setAttribute('cy',yEnd);
-newCircleB.setAttribute('r','10');
-newCircleB.setAttribute('stroke-width','1');
-newCircleB.setAttribute("stroke", "black");
-newCircleB.setAttribute("fill", "none");
-
-svgElem.append(newCircleB);
-
-
-
-
-    //<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
-
-*/
-
-
+        ///svgElem.append(existingLine);
 }
 }
 
@@ -1503,7 +1519,7 @@ function loadLocalStorage(e){
         if (tempString.startsWith("div") === true){
           //DEBUG:::DIV
             try{
-                //check if its a parent or chuild node of document.body
+                //check if its a parent or child node of document.body
                 var tempNode = tempString.replace("div-","");
                 console.log("changed to:::",tempNode);
                 var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
@@ -1522,7 +1538,7 @@ function loadLocalStorage(e){
                 nodeDivTemp.setAttribute("id",divNameId);
                 //append to document
                 document.body.appendChild(nodeDivTemp);
-                retrieveSavedNodeFromLocalStorage(tempNode,result)
+                retrieveSavedNodeFromLocalStorage("",tempNode,result)
                 var tempNodeSet = document.getElementById(tempNode);
                 nodeDivTemp.appendChild(tempNodeSet);
                 //Load the child div names and create relative to parent
@@ -1545,7 +1561,7 @@ function loadLocalStorage(e){
 
                     //get the child node
                     var tempChildNode = divNameId.replace("div-","");
-                    retrieveSavedNodeFromLocalStorage(tempChildNode,result)
+                    retrieveSavedNodeFromLocalStorage(tempNode,tempChildNode,result)
                     var tempNodeChildSet = document.getElementById(tempChildNode);
                     nodeDivTempChild.appendChild(tempNodeChildSet);
 
@@ -1577,9 +1593,11 @@ function loadLocalStorage(e){
                         divNameParent.appendChild(nodeDivTempChild);
 
                         //get the child node
-                        var tempChildNode = divNameChildId.replace("div-","");
-                        retrieveSavedNodeFromLocalStorage(tempChildNode,result)
-                        var tempNodeChildSet = document.getElementById(tempChildNode);
+                        var tempChildNodeId= divNameChildId.replace("div-","");
+                        //get parent 
+                        var tempParentNodeId = tempString.replace("div-","");
+                        retrieveSavedNodeFromLocalStorage(tempParentNodeId,tempChildNodeId,result)
+                        var tempNodeChildSet = document.getElementById(tempChildNodeId);
                         nodeDivTempChild.appendChild(tempNodeChildSet);
                     //}
                     //catch {console.log("Something went wrong");}    
@@ -1589,10 +1607,10 @@ function loadLocalStorage(e){
     }    
 }
 //load node and associated text
-function retrieveSavedNodeFromLocalStorage(nodeID,result){
+function retrieveSavedNodeFromLocalStorage(tempParentNodeId,nodeID,result){
     //console.log("Node Name sent=",nodeID);
     localStorageKeyName = result;
-    console.log("nodeID:",nodeID," result:",result);
+    console.log("tempParentNodeId: ",tempParentNodeId," nodeID:",nodeID," result:",result);
     //retrieve object based on nodename ID
     //elementMydiv = document.getElementById(nodeID);
     //get Mindmap stored data string and parse to JS Obj
@@ -1640,9 +1658,10 @@ function retrieveSavedNodeFromLocalStorage(nodeID,result){
         var yEnd = nodeNameObj["lineEndY"];
 
         var childNodeNameLine = "line-"+ nodeID;
+        var childDivNameLine = "div-"+childNodeNameLine;
 
         //draw the lines between child and parents
-        drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,childNodeNameLine);
+        drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,tempParentNodeId,childNodeNameLine,childDivNameLine);
     }
 }    
     
@@ -1759,7 +1778,9 @@ function createNodeText(e){
             var input = inputId.value;
             //add text as well to TEXTAREA node in between brackets 
             inputId.text = input;
-            inputId.setAttribute("value",input);  
+            inputId.setAttribute("value",input);
+            //add text as well to TEXTAREA node in between brackets 
+            inputId.textContent = input;  
             console.log(e.target.id,":::",input);
 
             var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
@@ -1976,7 +1997,7 @@ function createMoveNode(e){
                     //line name to be updated 
                     var childNodeNameLine = "line-"+ tempString;
         
-                    //redraw line with new coordinates
+                    //redraw line with new coordinates - (currentParentNodeId,childNodeNameLine,childDivNameLine)
                     updateLineSvg(tempNodeNameObj["lineStartX"],tempNodeNameObj["lineStartY"],tempNodeNameObj["lineEndX"],tempNodeNameObj["lineEndY"],childNodeNameLine);
                 }
             }
@@ -2130,4 +2151,5 @@ function createMoveNode(e){
 </script>    
 </body>
 </html>
+
 
