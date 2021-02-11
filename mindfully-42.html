@@ -284,8 +284,10 @@ function importLocalStorage(e){
             //Debug - base64 file
             //decode file from base64
             var mfJsonString = decodeURIComponent(atob(mfJsonStringBase64));
+            console.log(mfJsonString);
             //create object to extract version
             var mfJsonObj = JSON.parse(mfJsonString);
+            console.log(mfJsonObj);
             //set the key name from original obj
             var mfHtmlTitle = mfJsonObj["mfHtmlTitle"];
             //Set and Save to Local Storage
@@ -319,93 +321,102 @@ function importLocalStorage(e){
             var tempString = keysLocalStorageArray[i];
       
             if (tempString.startsWith("div") === true){
-            //DEBUG:::DIV
+                //DEBUG:::DIV
           
                 //check if its a parent or chuild node of document.body
-                var tempNode = tempString.replace("div-","");
-                console.log("changed to:::",tempNode);
-                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
-                var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
-                console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
-            
-                //Setup the first div and associated child divs and nodes
-                if (lineJsonTempObj["nodeType"] == "parent"){
-                    console.log("This node is a Parent not a child!");
-                    //create DIV
+                    var tempNode = tempString.replace("div-","");
+                    console.log("changed to:::",tempNode);
+                    var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                    //Dont process DIVS with zero properties - actually a bug but will have to fix later
+                    try{
+                        var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
+                        console.log("lineJsonTempObj:::",lineJsonTempObj);
+                    }
+                    catch {console.log("Node does not exist or deleted",tempNode);}
+                    if (Object.keys(lineJsonTempObj).length != 0)
+                    {
                 
-                    var nodeDivTemp = document.createElement("DIV");
-                    var divNameId = tempString;
-                    nodeDivTemp.setAttribute("id",divNameId);
-                    //append to document
-                    document.body.appendChild(nodeDivTemp);
-                    var parentPlaceholder = "parent";
-                    retrieveSavedNodeFromLocalStorage(parentPlaceholder,tempNode,result)
-                    var tempNodeSet = document.getElementById(tempNode);
-                    nodeDivTemp.appendChild(tempNodeSet);
-                    //Load the child div names and create relative to parent
-                    //load all nodes
-                    var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
-                    var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
-                    var o = Object.keys(lineJsonTempObj).length;
-                    console.log("var o:::",o);
-                    var keysLineTempArray = Object.keys(lineJsonTempObj);
-                    console.log("var keysLineTempArray:::",keysLineTempArray);
-                    for (var j=0;j < o;j++){
-                        var tempDivString = keysLineTempArray[j];
-                        var nodeDivTempChild = document.createElement("DIV");
-                        var divNameId = tempDivString;
-                        nodeDivTempChild.setAttribute("id",divNameId);
-                        //append to document
-                        nodeDivTemp.appendChild(nodeDivTempChild);
-                        var parentPlaceholder = "parent";
-                        //get the child node
-                        var tempChildNode = divNameId.replace("div-","");
-                        retrieveSavedNodeFromLocalStorage(parentPlaceholder,tempChildNode,result);
-                        var tempNodeChildSet = document.getElementById(tempChildNode);
-                        nodeDivTempChild.appendChild(tempNodeChildSet);
-
-                    }
-                }
-                else {
-                    //setup the rest of the divs and nodes after parent above
-                    //load all nodes
-                    var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
-                    console.log("DEBUG CHILD:::",mfJsonTempObj);
-                    var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
-                    console.log("DEBUG CHILD:::",lineJsonTempObj);
-                    var p = Object.keys(lineJsonTempObj).length;
-                    console.log("var p:::",p);
-                    var keysLineTempArray = Object.keys(lineJsonTempObj);
-                    console.log("var keysLineTempArray:::",keysLineTempArray);
-                    for (var k=0;k < p;k++){
-                        //try {
-                        var tempDivString = keysLineTempArray[k];
-                        console.log("PARENT DIV ID:::",tempString);
-                        //this parent div was created as above
-                        var divNameParent = document.getElementById(tempString);
+                        console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
+                
+                        //Setup the first div and associated child divs and nodes
+                        if (lineJsonTempObj["nodeType"] == "parent"){
+                            console.log("This node is a Parent not a child!");
+                            //create DIV
                         
-                        var nodeDivTempChild = document.createElement("DIV");
-                        var divNameChildId = tempDivString;
-                        
-                        nodeDivTempChild.setAttribute("id",divNameChildId);
-                        //append to document
-                        divNameParent.appendChild(nodeDivTempChild);
+                            var nodeDivTemp = document.createElement("DIV");
+                            var divNameId = tempString;
+                            nodeDivTemp.setAttribute("id",divNameId);
+                            //append to document
+                            document.body.appendChild(nodeDivTemp);
+                            var parentPlaceholder = "parent";
+                            retrieveSavedNodeFromLocalStorage(parentPlaceholder,tempNode,result)
+                            var tempNodeSet = document.getElementById(tempNode);
+                            nodeDivTemp.appendChild(tempNodeSet);
+                            //Load the child div names and create relative to parent
+                            //load all nodes
+                            var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                            var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
+                            var o = Object.keys(lineJsonTempObj).length;
+                            console.log("var o:::",o);
+                            var keysLineTempArray = Object.keys(lineJsonTempObj);
+                            console.log("var keysLineTempArray:::",keysLineTempArray);
+                            for (var j=0;j < o;j++){
+                                var tempDivString = keysLineTempArray[j];
+                                var nodeDivTempChild = document.createElement("DIV");
+                                var divNameId = tempDivString;
+                                nodeDivTempChild.setAttribute("id",divNameId);
+                                //append to document
+                                nodeDivTemp.appendChild(nodeDivTempChild);
+                                var parentPlaceholder = "parent";
+                                //get the child node
+                                var tempChildNode = divNameId.replace("div-","");
+                                retrieveSavedNodeFromLocalStorage(parentPlaceholder,tempChildNode,result);
+                                var tempNodeChildSet = document.getElementById(tempChildNode);
+                                nodeDivTempChild.appendChild(tempNodeChildSet);
 
-                        //get the child node
-                        var tempChildNode = divNameChildId.replace("div-","");
+                            }
+                        }
+                        else {
+                            //setup the rest of the divs and nodes after parent above
+                            //load all nodes
+                            var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                            console.log("DEBUG CHILD:::",mfJsonTempObj);
+                            var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
+                            console.log("DEBUG CHILD:::",lineJsonTempObj);
+                            var p = Object.keys(lineJsonTempObj).length;
+                            console.log("var p:::",p);
+                            var keysLineTempArray = Object.keys(lineJsonTempObj);
+                            console.log("var keysLineTempArray:::",keysLineTempArray);
+                            for (var k=0;k < p;k++){
+                                //try {
+                                var tempDivString = keysLineTempArray[k];
+                                console.log("PARENT DIV ID:::",tempString);
+                                //this parent div was created as above
+                                var divNameParent = document.getElementById(tempString);
+                                
+                                var nodeDivTempChild = document.createElement("DIV");
+                                var divNameChildId = tempDivString;
+                                
+                                nodeDivTempChild.setAttribute("id",divNameChildId);
+                                //append to document
+                                divNameParent.appendChild(nodeDivTempChild);
 
-                        //get parent 
-                        var tempParentNodeId = tempString.replace("div-","");
-                        //try{
-                            retrieveSavedNodeFromLocalStorage(tempParentNodeId,tempChildNode,result);
-                            var tempNodeChildSet = document.getElementById(tempChildNode);
-                            nodeDivTempChild.appendChild(tempNodeChildSet);
-                        //}
-                        //catch{
-                        //    console.log("Something went wrong with accessing the retrieveSavedNodeFromLocalStorage");        
-                        //}
-                    }
-                }   
+                                //get the child node
+                                var tempChildNode = divNameChildId.replace("div-","");
+
+                                //get parent 
+                                var tempParentNodeId = tempString.replace("div-","");
+                                try{
+                                    retrieveSavedNodeFromLocalStorage(tempParentNodeId,tempChildNode,result);
+                                    var tempNodeChildSet = document.getElementById(tempChildNode);
+                                    nodeDivTempChild.appendChild(tempNodeChildSet);
+                                }
+                                catch{
+                                    console.log("Something went wrong with accessing the retrieveSavedNodeFromLocalStorage");        
+                                }
+                            }
+                        }
+                    }   
             }
         }
     });
@@ -1148,6 +1159,7 @@ function deleteNode(nodeSearch){
                 console.log("VALUE:::",value);
                 
                 if (key.startsWith("div-") === true){
+                    
                     var valueObj = JSON.parse(value);
                     console.log("VALUEOBJ:::",valueObj);
                 
@@ -1159,16 +1171,19 @@ function deleteNode(nodeSearch){
                                 delete valueObj[subKey];
                                 mfJsonObj[key] = JSON.stringify(valueObj);
                             }
+                            var tempCheckDivEmptyObj = JSON.parse(mfJsonObj[key]);
+                            if (Object.keys(tempCheckDivEmptyObj).length === 0){
+                                delete mfJsonObj[key];
+                            }
                         }
                     }
-                
+                  
                     if (value === tempDiv) {
                         console.log('property=' + key + ' value=' + value);
                     }
                 }
                 
             }
-            //delete node that was searched - above the DIVS are also cleaned up.   
             delete mfJsonObj[nodeSearch];
             //store nodename key
             localStorage.setItem(localStorageKeyName,JSON.stringify(mfJsonObj));
@@ -2152,4 +2167,3 @@ function createMoveNode(e){
 </script>    
 </body>
 </html>
-
