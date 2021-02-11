@@ -12,6 +12,7 @@
 - add touch controls - v24/v25
 - add delete option
 - add hide all nodes collapse option using svg g - v42
+- add color pickers and fix a few minor bugs -v42
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -64,6 +65,11 @@ html, body {
     background-color: red;
 }
 
+.colorInput {
+    float: right;
+    clear: both;
+}
+
 
 </style>
 </head>
@@ -83,8 +89,7 @@ html, body {
 <input type="file" accept="text/json" id="importLocalStorage" style="display: none;"></input>
 <button type="button" class="defaultButton" id="addNode">Create Node</button>
 <button type="button" class="defaultButton" id="checkDateTimeId">Check JSON File Date/Time</button>
-<!--for IPADS-->
-<button type="button" class="defaultButton" id="menuLaunch">Menu</button>
+
 
 <script>
 //Use Strict
@@ -148,9 +153,7 @@ else if (browserReport.search("chrome") != -1){
   document.getElementById("exportLocalStorage").addEventListener("click", exportLocalStorage);
   //export a local storage click
   document.getElementById("importLocalStorage").addEventListener("change", importLocalStorage);  
-  //Show Menu - Ipad - click  
-  document.getElementById("menuLaunch").addEventListener("click", createTouchForm);
-
+  
   var localStorageKeyName; 
 
   //add eventlistner for clicking into a node
@@ -534,13 +537,9 @@ function createForm(e) {
         
         // Append the submit button to the form 
         form.appendChild(createChildNodeButton);  
-
+        form.appendChild(br.cloneNode());
         //DEBUG///////////////////////////////////////////////
-        form.appendChild(br.cloneNode()); 
-        var bgColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','gold','lime','green','lightblue','blue','orange','pink','brown'];
-        var fontColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','gold','lime','green','lightblue','blue','orange','pink','brown'];
-        var borderColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','gold','lime','green','lightblue','blue','orange','pink','brown'];
-        
+        form.appendChild(br.cloneNode());   
         //create background css id
         var bgColorNodeId = "bgcolor-"+nodeSearch;
         //create background css id
@@ -548,73 +547,61 @@ function createForm(e) {
         //create background css id
         var borderColorNodeId = "bordercolor-"+nodeSearch;
         
-
-        //background color select statement - simple version - no rgb
-        var selectBgColor = document.createElement('select');
+        //create label for gbcolorinput
+        var selectBgColorLabel = document.createElement('label');
+        var selectBgColorLabelText = document.createTextNode("Background Color");
+        selectBgColorLabel.setAttribute("for",bgColorNodeId);
+        selectBgColorLabel.setAttribute("id","label-"+bgColorNodeId);
+        form.appendChild(selectBgColorLabel);
+        selectBgColorLabel.appendChild(selectBgColorLabelText);
+        //bac color select statement - simple version - no rgb
+        var selectBgColor = document.createElement('input');
         selectBgColor.setAttribute("name",bgColorNodeId);
         selectBgColor.setAttribute("id",bgColorNodeId);
-
-        //font color select statement - simple version - no rgb
-        var selectFontColor = document.createElement('select');
+        selectBgColor.setAttribute("value","#FFFFFF");
+        selectBgColor.setAttribute("type","color");
+        selectBgColor.setAttribute("class","colorInput");
+        form.appendChild(selectBgColor);
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
+        
+        //create label for gbcolorinput
+        var selectFontColorLabel = document.createElement('label');
+        var selectFontColorLabelText = document.createTextNode("Font Color");
+        selectFontColorLabel.setAttribute("for",fontColorNodeId);
+        selectFontColorLabel.setAttribute("id","label-"+fontColorNodeId);
+        form.appendChild(selectFontColorLabel);
+        selectFontColorLabel.appendChild(selectFontColorLabelText);
+        //Font color select statement - simple version - no rgb
+        var selectFontColor = document.createElement('input');
         selectFontColor.setAttribute("name",fontColorNodeId);
         selectFontColor.setAttribute("id",fontColorNodeId);
+        selectFontColor.setAttribute("value","#000000");
+        selectFontColor.setAttribute("type","color");
+        selectFontColor.setAttribute("class","colorInput");
+        form.appendChild(selectFontColor);
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
 
-        //background color select statement - simple version - no rgb
-        var selectBorderColor = document.createElement('select');
+        //create border for gbcolorinput
+        var selectBorderColorLabel = document.createElement('label');
+        var selectBorderColorLabelText = document.createTextNode("Border/Line Color");
+        selectBorderColorLabel.setAttribute("for",borderColorNodeId);
+        selectBorderColorLabel.setAttribute("id","label-"+borderColorNodeId);
+        form.appendChild(selectBorderColorLabel);
+        selectBorderColorLabel.appendChild(selectBorderColorLabelText);
+        //border color select statement - simple version - no rgb
+        var selectBorderColor = document.createElement('input');
         selectBorderColor.setAttribute("name",borderColorNodeId);
         selectBorderColor.setAttribute("id",borderColorNodeId);
-        form.appendChild(br.cloneNode());
-        form.appendChild(br.cloneNode());
-
-        // Append to the form 
-        form.appendChild(selectBgColor);
-        form.appendChild(br.cloneNode()); 
-        
-        form.appendChild(selectFontColor);
-        form.appendChild(br.cloneNode()); 
-        
+        selectBorderColor.setAttribute("value","#000000");
+        selectBorderColor.setAttribute("type","color");
+        selectBorderColor.setAttribute("class","colorInput");
         form.appendChild(selectBorderColor);
-        form.appendChild(br.cloneNode()); 
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
         
-        //background colour choice//
-		var bgColorOption = document.createElement('option');
-		bgColorOption.value = "white";
-		bgColorOption.text = "Choose Background Color";
-		selectBgColor.appendChild(bgColorOption);
-        //Create color Choices
-        for (var i = 0; i < bgColorChoice.length; i++){
-	        var bgColorOption = document.createElement('option');
-		    bgColorOption.value = bgColorChoice[i];
-			bgColorOption.text = bgColorChoice[i];
-		    selectBgColor.appendChild(bgColorOption);
-		}
-
-        //node font colour choice//
-        var fontColorOption = document.createElement('option');
-		fontColorOption.value = "black";
-		fontColorOption.text = "Choose font Color";
-		selectFontColor.appendChild(fontColorOption);
-        //Create color Choices
-        for (var i = 0; i < fontColorChoice.length; i++){
-	        var fontColorOption = document.createElement('option');
-		    fontColorOption.value = fontColorChoice[i];
-			fontColorOption.text = fontColorChoice[i];
-		    selectFontColor.appendChild(fontColorOption);
-		}
-
-        //border colour choice//
-		var borderColorOption = document.createElement('option');
-		borderColorOption.value = "black";
-		borderColorOption.text = "Choose border Color";
-		selectBorderColor.appendChild(borderColorOption);
-        //Create color Choices
-        for (var i = 0; i < borderColorChoice.length; i++){
-	        var borderColorOption = document.createElement('option');
-		    borderColorOption.value = borderColorChoice[i];
-			borderColorOption.text = borderColorChoice[i];
-		    selectBorderColor.appendChild(borderColorOption);
-		}
-        form.appendChild(br.cloneNode()); 
         //delete
         // create a submit button 
         var d = document.createElement("input"); 
@@ -622,7 +609,6 @@ function createForm(e) {
         d.setAttribute("type", "button"); 
         d.setAttribute("value", "Delete Node"); 
         
-
         //s.style.position = "absolute";
         d.style.backgroundColor = "red";
         //s.style.top = e.clientY +"px";
@@ -654,12 +640,15 @@ function createForm(e) {
                 deleteForm();
             
         });
+
+
         //Get color and change it for the node and save in localstorage
-        document.getElementById(bgColorNodeId).addEventListener("change", () => {
+        var bgColorInput = document.getElementById(bgColorNodeId);
+        bgColorInput.addEventListener("change", () => {
             //load current node element and then change bg color
-            var bgColorDropDown = document.getElementById(bgColorNodeId);
+            
             var currentNode = document.getElementById(nodeSearch);
-            currentNode.style.backgroundColor = bgColorDropDown.value;
+            currentNode.style.backgroundColor = bgColorInput.value;
             //console.log("color value:::",bgColorDropDown.value);
             
             //save to localstorage 
@@ -669,7 +658,7 @@ function createForm(e) {
             //load storage vars so can append
             var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
             var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
-            tempNodeSearchObj["bgNodeColor"] = bgColorDropDown.value;
+            tempNodeSearchObj["bgNodeColor"] = bgColorInput.value;
             //console.log("tempNodeSearchOnj",tempNodeSearchObj);
             //make a string out of the child object
             var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
@@ -682,19 +671,17 @@ function createForm(e) {
         });
 
         //Get color and change it for the node and save in localstorage
-        document.getElementById(fontColorNodeId).addEventListener("change", () => {
+        var fontColorInput = document.getElementById(fontColorNodeId);
+        fontColorInput.addEventListener("change", () => {
             //load current node element and then change bg color
-            var fontColorDropDown = document.getElementById(fontColorNodeId);
             var currentNode = document.getElementById(nodeSearch);
-            currentNode.style.color = fontColorDropDown.value;
-            //console.log("color value:::",bgColorDropDown.value);
-            
+            currentNode.style.color = fontColorInput.value;
             //save to localstorage 
             //Store each node as a subset of the localstorage and stringify all of it.
             //load storage vars so can append
             var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
             var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
-            tempNodeSearchObj["fontNodeColor"] = fontColorDropDown.value;
+            tempNodeSearchObj["fontNodeColor"] = fontColorInput.value;
             //console.log("tempNodeSearchOnj",tempNodeSearchObj);
             //make a string out of the child object
             var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
@@ -707,18 +694,18 @@ function createForm(e) {
         });
 
         //Get color and change it for the node and save in localstorage
-        document.getElementById(borderColorNodeId).addEventListener("change", () => {
+        var borderColorInput = document.getElementById(borderColorNodeId);
+        borderColorInput.addEventListener("change", () => {
             //load current node element and then change bg color
-            var borderColorDropDown = document.getElementById(borderColorNodeId);
             var currentNode = document.getElementById(nodeSearch);
-            currentNode.style.borderColor = borderColorDropDown.value;
+            currentNode.style.borderColor = borderColorInput.value;
             //console.log("color value:::",bgColorDropDown.value);
             try {
                 //DEBUG SVG line color change
                 var tempLineNodeId = "line-"+nodeSearch;
                 var tempLineNode = document.getElementById(tempLineNodeId);
             
-                tempLineNode.setAttribute("stroke", borderColorDropDown.value);
+                tempLineNode.setAttribute("stroke", borderColorInput.value);
             }
             catch {
                 console.log("ERROR:::Unable to update line color - must be a Parent Node.")   
@@ -823,314 +810,6 @@ function hideUnhideChildNodes(nodeSearch){
     else{
         tempNodeParent.style.border = "unset";
     }
-}
-
-
-function createTouchForm(e) { 
-   e.preventDefault();
-  var nodeSearch = e.target.id;
-    //console.log("createForm Search:::",nodeSearch);
-    /*if (nodeSearch.search("node") != -1){
-      //check if form exists - if so delete
-      let formDom = document.getElementById("formDivContainer");
-      if (formDom !== null){
-          while (formDom.firstChild) {
-              formDom.removeChild(formDom.firstChild);
-          }
-
-          var x = document.getElementById("formDivContainer");
-          ///console.log("Form=",x);
-          x.remove();
-      }
-    */
-        var br = document.createElement("br"); 
-        // Create a form synamically 
-        var form = document.createElement("form"); 
-        form.setAttribute("id", "formDivContainer"); 
-        
-        form.style.position = "absolute";
-        form.style.backgroundColor = "lightgrey";
-        form.style.borderStyle = "none";
-        form.style.width = 190 +"px";
-        //form.style.left = 200 +"px";
-        ///console.log(e);
-        // Create an input element for nodeid 
-        var formNodeId = document.createElement("input");
-        formNodeId.setAttribute("id", "formNodeId");  
-        formNodeId.setAttribute("type", "text"); 
-        formNodeId.setAttribute("name", "formNodeId"); 
-        formNodeId.setAttribute("placeholder", e.target.id); 
-        formNodeId.setAttribute("value", e.target.id); 
-        
-
-        //formNodeId.style.position = "relative";
-        formNodeId.style.backgroundColor = "lightgrey";
-        //formNodeId.style.top = (e.clientY+20) +"px";
-        //formNodeId.style.left = (e.clientX+20) +"px";
-        
-        // Append the full name input to the form 
-        form.appendChild(formNodeId);  
-        
-        //get node id text value
-        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::e.target.id.value:::",e.target.id);
-        var formNodeTextId = document.getElementById(e.target.id);
-        var formNodeTextValue = formNodeTextId.value;
-        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::formNodeTextValue:::",formNodeTextValue);
-      
-        // Create an input element for password 
-        var formNodeText = document.createElement("input");
-        formNodeText.setAttribute("id", "formNodeText");  
-        formNodeText.setAttribute("type", "text"); 
-        formNodeText.setAttribute("name", "formNodeText"); 
-        formNodeText.setAttribute("placeholder", formNodeTextValue); 
-        
-        //formNodeText.style.position = "relative";
-        formNodeText.style.backgroundColor = "lightgrey";
-        //formNodeText.style.top = e.clientY +"px";
-        //formNodeText.style.left = e.clientX +"px";
-
-        // Append the node text 
-        form.appendChild(formNodeText);  
-        
-
-        // create a submit button 
-        var s = document.createElement("input"); 
-        s.setAttribute("id", "submitClose"); 
-        s.setAttribute("type", "button"); 
-        s.setAttribute("value", "Close"); 
-        
-
-        //s.style.position = "absolute";
-        s.style.backgroundColor = "green";
-        //s.style.top = e.clientY +"px";
-        //s.style.left = e.clientX +"px";
-
-        // Append the submit button to the form 
-        form.appendChild(s); 
-        form.appendChild(br.cloneNode());  
-
-        //create a add child node button (and a line)
-        // create a submit button 
-        var createChildNodeButton = document.createElement("input"); 
-        createChildNodeButton.setAttribute("id", "createChildNodeButton"); 
-        createChildNodeButton.setAttribute("type", "button"); 
-        createChildNodeButton.setAttribute("value", "Create Child Node"); 
-        
-        //createChildNodeButton.style.position = "relative";
-        createChildNodeButton.style.backgroundColor = "yellow";
-        //createChildNodeButton.style.top = e.clientY +"px";
-        //createChildNodeButton.style.left = e.clientX +"px";
-
-            
-        // Inserting a line break 
-        form.appendChild(br.cloneNode());  
-
-        // Append the Password to the form 
-        form.appendChild(formNodeText);  
-        form.appendChild(br.cloneNode());  
-            
-        
-        // Append the submit button to the form 
-        form.appendChild(createChildNodeButton);  
-
-        //DEBUG///////////////////////////////////////////////
-        form.appendChild(br.cloneNode()); 
-        var bgColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','green','lightblue','blue','orange','pink','brown'];
-        var fontColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','green','lightblue','blue','orange','pink','brown'];
-        var borderColorChoice = ['white','lightgrey','grey','black','red','purple','yellow','green','lightblue','blue','orange','pink','brown'];
-        
-        //create background css id
-        var bgColorNodeId = "bgcolor-"+nodeSearch;
-        //create background css id
-        var fontColorNodeId = "fontcolor-"+nodeSearch;
-        //create background css id
-        var borderColorNodeId = "bordercolor-"+nodeSearch;
-        
-
-        //background color select statement - simple version - no rgb
-        var selectBgColor = document.createElement('select');
-        selectBgColor.setAttribute("name",bgColorNodeId);
-        selectBgColor.setAttribute("id",bgColorNodeId);
-
-        //font color select statement - simple version - no rgb
-        var selectFontColor = document.createElement('select');
-        selectFontColor.setAttribute("name",fontColorNodeId);
-        selectFontColor.setAttribute("id",fontColorNodeId);
-
-        //background color select statement - simple version - no rgb
-        var selectBorderColor = document.createElement('select');
-        selectBorderColor.setAttribute("name",borderColorNodeId);
-        selectBorderColor.setAttribute("id",borderColorNodeId);
-        form.appendChild(br.cloneNode());
-        form.appendChild(br.cloneNode());
-
-        // Append to the form 
-        form.appendChild(selectBgColor);
-        form.appendChild(br.cloneNode()); 
-        
-        form.appendChild(selectFontColor);
-        form.appendChild(br.cloneNode()); 
-        
-        form.appendChild(selectBorderColor);
-        form.appendChild(br.cloneNode()); 
-        
-        //background colour choice//
-		var bgColorOption = document.createElement('option');
-		bgColorOption.value = "white";
-		bgColorOption.text = "Choose Background Color";
-		selectBgColor.appendChild(bgColorOption);
-        //Create color Choices
-        for (var i = 0; i < bgColorChoice.length; i++){
-	        var bgColorOption = document.createElement('option');
-		    bgColorOption.value = bgColorChoice[i];
-			bgColorOption.text = bgColorChoice[i];
-		    selectBgColor.appendChild(bgColorOption);
-		}
-
-        //node font colour choice//
-        var fontColorOption = document.createElement('option');
-		fontColorOption.value = "black";
-		fontColorOption.text = "Choose font Color";
-		selectFontColor.appendChild(fontColorOption);
-        //Create color Choices
-        for (var i = 0; i < fontColorChoice.length; i++){
-	        var fontColorOption = document.createElement('option');
-		    fontColorOption.value = fontColorChoice[i];
-			fontColorOption.text = fontColorChoice[i];
-		    selectFontColor.appendChild(fontColorOption);
-		}
-
-        //border colour choice//
-		var borderColorOption = document.createElement('option');
-		borderColorOption.value = "black";
-		borderColorOption.text = "Choose border Color";
-		selectBorderColor.appendChild(borderColorOption);
-        //Create color Choices
-        for (var i = 0; i < borderColorChoice.length; i++){
-	        var borderColorOption = document.createElement('option');
-		    borderColorOption.value = borderColorChoice[i];
-			borderColorOption.text = borderColorChoice[i];
-		    selectBorderColor.appendChild(borderColorOption);
-		}
-        form.appendChild(br.cloneNode()); 
-        //delete
-        // create a submit button 
-        var d = document.createElement("input"); 
-        d.setAttribute("id", "deleteNodeButton"); 
-        d.setAttribute("type", "button"); 
-        d.setAttribute("value", "Delete Node"); 
-        
-
-        //s.style.position = "absolute";
-        d.style.backgroundColor = "red";
-        //s.style.top = e.clientY +"px";
-        //s.style.left = e.clientX +"px";
-
-        // Append the submit button to the form 
-        form.appendChild(d); 
-        form.appendChild(br.cloneNode());  
-        //form.appendChild(selectBgColor);
-        form.appendChild(br.cloneNode()); 
-        document.getElementsByTagName("body")[0].appendChild(form); 
-        //document.getElementById("formDiv").appendChild("formDivContainer");
-        var f = document.getElementById("formDivContainer") 
-        f.style.postion = "relative";
-        f.style.left = (e.clientX+20)+"px";
-        f.style.top = (e.clientY+20)+"px";
-
-        document.getElementById("submitClose").addEventListener("click", deleteForm);
-        document.getElementById("createChildNodeButton").addEventListener("click", createChildNode); 
-        document.getElementById("deleteNodeButton").addEventListener("click",() =>{
-            
-                deleteNode(nodeSearch);
-                deleteForm();
-            
-        });
-        //Get color and change it for the node and save in localstorage
-        document.getElementById(bgColorNodeId).addEventListener("change", () => {
-            //load current node element and then change bg color
-            var bgColorDropDown = document.getElementById(bgColorNodeId);
-            var currentNode = document.getElementById(nodeSearch);
-            currentNode.style.backgroundColor = bgColorDropDown.value;
-            //console.log("color value:::",bgColorDropDown.value);
-            
-            //save to localstorage 
-
-
-            //Store each node as a subset of the localstorage and stringify all of it.
-            //load storage vars so can append
-            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
-            tempNodeSearchObj["bgNodeColor"] = bgColorDropDown.value;
-            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
-            //make a string out of the child object
-            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
-            //save coords string into node name line
-            mfJson[nodeSearch] = tempNodeSearchString;
-            
-            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
-            //store nodename key
-            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-        });
-
-        //Get color and change it for the node and save in localstorage
-        document.getElementById(fontColorNodeId).addEventListener("change", () => {
-            //load current node element and then change bg color
-            var fontColorDropDown = document.getElementById(fontColorNodeId);
-            var currentNode = document.getElementById(nodeSearch);
-            currentNode.style.color = fontColorDropDown.value;
-            //console.log("color value:::",bgColorDropDown.value);
-            
-            //save to localstorage 
-            //Store each node as a subset of the localstorage and stringify all of it.
-            //load storage vars so can append
-            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
-            tempNodeSearchObj["fontNodeColor"] = fontColorDropDown.value;
-            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
-            //make a string out of the child object
-            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
-            //save coords string into node name line
-            mfJson[nodeSearch] = tempNodeSearchString;
-            
-            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
-            //store nodename key
-            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-        });
-
-        //Get color and change it for the node and save in localstorage
-        document.getElementById(borderColorNodeId).addEventListener("change", () => {
-            //load current node element and then change bg color
-            var borderColorDropDown = document.getElementById(borderColorNodeId);
-            var currentNode = document.getElementById(nodeSearch);
-            currentNode.style.borderColor = borderColorDropDown.value;
-            //console.log("color value:::",bgColorDropDown.value);
-            try {
-                //DEBUG SVG line color change
-                var tempLineNodeId = "line-"+nodeSearch;
-                var tempLineNode = document.getElementById(tempLineNodeId);
-            
-                tempLineNode.setAttribute("stroke", borderColorDropDown.value);
-            }
-            catch {
-                console.log("ERROR:::Unable to update line color - must be a Parent Node.")   
-            }
-            //save to localstorage
-            //Store each node as a subset of the localstorage and stringify all of it.
-            //load storage vars so can append
-            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
-            tempNodeSearchObj["borderNodeColor"] = borderColorDropDown.value;
-            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
-            //make a string out of the child object
-            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
-            //save coords string into node name line
-            mfJson[nodeSearch] = tempNodeSearchString;
-            
-            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
-            //store nodename key
-            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-        });
 }
 
 function deleteNode(nodeSearch){
