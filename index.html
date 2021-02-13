@@ -38,7 +38,7 @@ html, body {
     font-size: 100%;
     background-color: rgb(241, 239, 239);
     border: 1px solid black;
-    margin: 1px;
+    margin: 5px;
     font-weight: 600;
     }
 
@@ -108,6 +108,8 @@ html, body {
 <script>
 //Use Strict
 'use strict';
+//Mindfully App version - in case different versions get incompatible - store the version with the mindmap so we know what version may load it.
+var mfAppVersion = "1.44";
 var startX = 0;
 var startY = 0;
 var deviationX = 0;
@@ -331,7 +333,11 @@ function importLocalStorage(e){
         var localStorageKeyName = mfHtmlTitle;
         var x = document.getElementById("mfHtmlTitle");
         var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-        x.innerHTML = mfJson["mfHtmlTitle"];
+
+        //add date string to html title so when CTRL+ s is used to save its unique and has a timestamp of when it was loaded atleast.
+        let currentDateTimeString = Date.now();
+        x.innerHTML = mfJson["mfHtmlTitle"]+"-"+currentDateTimeString;
+
         var result = mfJson["mfHtmlTitle"];
         document.getElementById("mfVersion").innerHTML = mfJson["mfVersion"];
     
@@ -340,6 +346,8 @@ function importLocalStorage(e){
         //change version prompt if required
         var versionResult = window.prompt("Version:?",mfJson["mfVersion"]);
         mfJson["mfVersion"] = versionResult;
+        //store App version used to import file
+        mfJson["mfAppVersion"] = mfAppVersion;
         document.getElementById("mfVersion").innerHTML = versionResult;
         //save version back to local storage object
         localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
@@ -461,6 +469,23 @@ function createForm(e) {
   var nodeSearch = e.target.id;
     //console.log("createForm Search:::",nodeSearch);
     if (nodeSearch.search("node") != -1){
+        try {
+            //get localstorage key and associated JSON strings
+            var mfJsonObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+            
+            var mfJsonNodeTempObj = JSON.parse(mfJsonObj[nodeSearch]);
+
+            //get current colors
+            var bgNodeColorTemp = mfJsonNodeTempObj["bgNodeColor"];
+            console.log("bgNodeColorTemp",bgNodeColorTemp);
+            var fontNodeColorTemp = mfJsonNodeTempObj["fontNodeColor"];
+            console.log("fontNodeColorTemp",fontNodeColorTemp);
+            var borderNodeColorTemp =  mfJsonNodeTempObj["borderNodeColor"];
+            console.log("borderNodeColorTemp",borderNodeColorTemp);
+        }
+        catch (error) {console.error(error); console.log("mfJsonNodeTempObj",mfJsonNodeTempObj);}
+
+
       //check if form exists - if so delete
       let formDom = document.getElementById("formDivContainer");
       if (formDom !== null){
@@ -589,7 +614,8 @@ function createForm(e) {
         var selectBgColor = document.createElement('input');
         selectBgColor.setAttribute("name",bgColorNodeId);
         selectBgColor.setAttribute("id",bgColorNodeId);
-        selectBgColor.setAttribute("value","#FFFFFF");
+        //lookedup from local storage
+        selectBgColor.setAttribute("value",bgNodeColorTemp);
         selectBgColor.setAttribute("type","color");
         selectBgColor.setAttribute("class","colorInput");
         form.appendChild(selectBgColor);
@@ -607,7 +633,7 @@ function createForm(e) {
         var selectFontColor = document.createElement('input');
         selectFontColor.setAttribute("name",fontColorNodeId);
         selectFontColor.setAttribute("id",fontColorNodeId);
-        selectFontColor.setAttribute("value","#000000");
+        selectFontColor.setAttribute("value",fontNodeColorTemp);
         selectFontColor.setAttribute("type","color");
         selectFontColor.setAttribute("class","colorInput");
         form.appendChild(selectFontColor);
@@ -625,7 +651,7 @@ function createForm(e) {
         var selectBorderColor = document.createElement('input');
         selectBorderColor.setAttribute("name",borderColorNodeId);
         selectBorderColor.setAttribute("id",borderColorNodeId);
-        selectBorderColor.setAttribute("value","#000000");
+        selectBorderColor.setAttribute("value",borderNodeColorTemp);
         selectBorderColor.setAttribute("type","color");
         selectBorderColor.setAttribute("class","colorInput");
         form.appendChild(selectBorderColor);
@@ -746,7 +772,7 @@ function createForm(e) {
             //load storage vars so can append
             var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
             var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
-            tempNodeSearchObj["borderNodeColor"] = borderColorDropDown.value;
+            tempNodeSearchObj["borderNodeColor"] = borderColorInput.value;
             //console.log("tempNodeSearchOnj",tempNodeSearchObj);
             //make a string out of the child object
             var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
@@ -967,9 +993,9 @@ function createChildNode(e){
     x.setAttribute("id",childNodeName);
     x.setAttribute("class","defaultNode");
     x.style.position = "absolute";
-    x.style.backgroundColor = "white";
-    x.style.color = "black";
-    var nodeBorderColor = "black";
+    x.style.backgroundColor = "#ffffff";
+    x.style.color = "#000000";
+    var nodeBorderColor = "#000000";
     x.style.borderColor = nodeBorderColor;
     x.style.top = Math.floor(Math.random() * Math.floor(window.innerHeight - (window.innerHeight/3)))+"px";
     x.style.left = Math.floor(Math.random() * Math.floor(window.innerWidth - (window.innerWidth/3)))+"px";
@@ -1038,8 +1064,8 @@ function createChildNode(e){
     tempChildNodeObj["lineEndX"] = lineEndX;
     tempChildNodeObj["lineEndY"] = lineEndY;
     tempChildNodeObj["nodeText"] = childNodeName;
-    tempChildNodeObj["bgNodeColor"] = "white";
-    tempChildNodeObj["fontNodeColor"] = "black";
+    tempChildNodeObj["bgNodeColor"] = "#ffffff";
+    tempChildNodeObj["fontNodeColor"] = "#000000";
     tempChildNodeObj["borderNodeColor"] = nodeBorderColor;
     console.log("tempChildNodeObj",tempChildNodeObj);
     //make a string out of the child object
@@ -1161,8 +1187,6 @@ if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || 
         existingLine.setAttribute('y1',yStart);
         existingLine.setAttribute('x2',xEnd);
         existingLine.setAttribute('y2',yEnd);
-        //existingLine.setAttribute("stroke", "black")
-        ///svgElem.append(existingLine);
 }
 }
 
@@ -1189,6 +1213,12 @@ function deleteForm(e) {
     //Change title to key name
     var x = document.getElementById("mfHtmlTitle");
     var mfHtmlTitle = localStorageKeyName;
+
+    //add date string to html title so when CTRL+ s is used to save its unique and has a timestamp of when it was loaded atleast.
+    let currentDateTimeString = Date.now();
+    x.innerHTML = mfHtmlTitle+"-"+currentDateTimeString;
+    console.log(mfHtmlTitle+"-"+currentDateTimeString);
+
     //create version control
     var mfVersion = window.prompt("Version:?","1.0");
     
@@ -1198,6 +1228,8 @@ function deleteForm(e) {
     
     mfJson = {"mfHtmlTitle":mfHtmlTitle};
     mfJson["mfVersion"] = mfVersion;
+    //store version pf application used to create this mindmap 
+    mfJson["mfAppVersion"] = mfAppVersion;
     localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
     var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
   }  
@@ -1215,8 +1247,10 @@ function loadLocalStorage(e){
   
     var x = document.getElementById("mfHtmlTitle");
     var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-    x.innerHTML = mfJson["mfHtmlTitle"];
-    console.log(mfJson["mfHtmlTitle"]);
+    //add date string to html title so when CTRL+ s is used to save its unique and has a timestamp of when it was loaded atleast.
+    let currentDateTimeString = Date.now();
+    x.innerHTML = mfJson["mfHtmlTitle"]+"-"+currentDateTimeString;
+    console.log(mfJson["mfHtmlTitle"]+"-"+currentDateTimeString);
     document.getElementById("mfVersion").innerHTML = mfJson["mfVersion"];
     
     console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
@@ -1229,6 +1263,9 @@ function loadLocalStorage(e){
     //change version prompt if required
     var versionResult = window.prompt("Version:?",mfJson["mfVersion"]);
     mfJson["mfVersion"] = versionResult;
+    //store App version used to load mindamp
+    mfJson["mfAppVersion"] = mfAppVersion;
+
     document.getElementById("mfVersion").innerHTML = versionResult;
     localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
 
@@ -1413,9 +1450,9 @@ function createNode(e){
     x.setAttribute("id",nodeName);
     x.setAttribute("class","defaultNode");
     x.style.position = "absolute";
-    x.style.backgroundColor = "white";
-    x.style.color = "black";
-    x.style.borderColor = "black";
+    x.style.backgroundColor = "#ffffff";
+    x.style.color = "#000000";
+    x.style.borderColor = "#000000";
     
     x.setAttribute("draggable","true");
 
@@ -1459,9 +1496,9 @@ function createNode(e){
     tempNodeCoordsObj["lineEndY"] = lineEndY;
     
     tempNodeCoordsObj["nodeType"] = "parent";
-    tempNodeCoordsObj["bgNodeColor"] = "white";
-    tempNodeCoordsObj["fontNodeColor"] = "black";
-    tempNodeCoordsObj["borderNodeColor"] = "black";
+    tempNodeCoordsObj["bgNodeColor"] = "#ffffff";
+    tempNodeCoordsObj["fontNodeColor"] = "#000000";
+    tempNodeCoordsObj["borderNodeColor"] = "#000000";
     
     var tempNodeCoordsStringify = JSON.stringify(tempNodeCoordsObj);
     mfJson[nodeName] = tempNodeCoordsStringify;
@@ -1877,5 +1914,3 @@ function createMoveNode(e){
 </script>    
 </body>
 </html>
-
-
