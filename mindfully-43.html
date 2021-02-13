@@ -219,11 +219,13 @@ function checkFileDateTime(e){
     var fileDateTime = new Date(getDateTimeInteger);
     console.log(fileDateTime);
     //debug date and time
-    var date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
-    var time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
+    //var date = (fileDateTime.getFullYear()+'-'+(fileDateTime.toLocaleString('default', { month: 'short' })+'-'+fileDateTime.getDate());
+    //var time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
     //debug - show date and time
-    console.log(date+" "+time);
+    //console.log(date+" "+time);
     alert(fileDateTime);
+
+    //today.toLocaleString('default', { month: 'short' })
 
 }
 
@@ -246,10 +248,10 @@ function checkFileDateTime(e){
     let fileDateTime = new Date(currentDateTimeString);
 
     //debug date and time
-    let date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
-    let time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
+    //let date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
+    //let time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
     //debug - show date and time
-    console.log(date+" "+time);
+    console.log(fileDateTime);
 
     //downloadLink.style.postion = "absolute";
     //download method and set name
@@ -295,14 +297,16 @@ function importLocalStorage(e){
     console.log("filechosen",e.target.files[0].lastModified);
     var lastModifiedDateTimeFileString = e.target.files[0].lastModified;
     //debug and show date and time
-    let fileDateTime = new Date(lastModifiedDateTimeFileString);
+    var lastModifiedDateTimeFileInteger = parseInt(lastModifiedDateTimeFileString);
+    
+    let fileDateTime = new Date(lastModifiedDateTimeFileInteger);
 
     //debug date and time
-    let date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
-    let time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
+    //let date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
+    //let time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
     
     var lastModifiedDateTime = document.getElementById("mfDateTimeLastSave");
-    lastModifiedDateTime.innerHTML = "Imported File Last Modified Date:::"+date+"  "+time;
+    lastModifiedDateTime.innerHTML = "Imported File Last Modified Date:::"+fileDateTime;
     
     reader.readAsText(fileChosen.files[0]);
     reader.addEventListener('load', (e) => {
