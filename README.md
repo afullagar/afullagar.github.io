@@ -11,7 +11,7 @@ They are persistant as long as you dont clear the cache. Even if you close the b
 Getting started:
 
 - load ragalluf.online
-- choose if you want continuous backups (every change is exported to a JSON file.) - press cancel if not required (probably only required for critical data)
+- choose if you want realtime version control / backups (every change is exported to a JSON file.) - press cancel if not required (probably only required for critical data)
 - CREATE new to Local Storage if its a new Mindmap - give it a name and choose a version.
 - CREATE PARENT Node as the starting point of the mindmap.
 - Move it or [RIGHT Click] on the node to chosse and create a Child Node(s)
