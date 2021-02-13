@@ -13,6 +13,7 @@
 - add delete option
 - add hide all nodes collapse option using svg g - v42
 - add color pickers and fix a few minor bugs -v42
+- fies and change the way the date time is checked on file import - legacy removed and supported firefox added - v43
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -31,14 +32,25 @@ html, body {
     }
 
 .defaultButton {
-    border-radius: 10px; 
+    border-radius: 10px;
+    padding: 5px; 
     color:inherit; 
     font-size: 100%;
-    background-color: rgb(241, 239, 239); 
-    padding:0px;
+    background-color: rgb(241, 239, 239);
     border: 1px solid black;
-    margin: 0px;
-    font-weight: 400;
+    margin: 1px;
+    font-weight: 600;
+    }
+
+.downloadButton {
+    border-radius: 10px;
+    padding: 5px; 
+    color:inherit;
+    font-size: 103%;
+    background-color: rgb(241, 239, 239);
+    border: 1px solid black;
+    margin: 1px;
+    font-weight: 800;
     }
 
 .defaultNode {
@@ -82,12 +94,12 @@ html, body {
 <!--version-->
 <p id="mfVersion">1.0</p>
 <p id="mfDateTimeLastSave"></p> 
-<button type="button" class="defaultButton" id="loadLocalStorage">Load from LocalStorage</button>
-<button type="button" class="defaultButton" id="createLocalStorage">Create to LocalStorage</button>
-<button type="button" class="defaultButton" id="exportLocalStorage">Export LocalStorage to File</button>
-<label for="importLocalStorage" class="defaultButton">Import Upload to LocalStorage</label> 
+<button type="button" class="defaultButton" id="loadLocalStorage">LOAD from Browser Local Storage</button>
+<button type="button" class="defaultButton" id="createLocalStorage">CREATE new to Browser Local Storage</button>
+<button type="button" class="defaultButton" id="addNode">CREATE PARENT Node</button>
+<button type="button" class="defaultButton" id="exportLocalStorage">EXPORT Browser Local Storage to a File</button>
+<label for="importLocalStorage" class="downloadButton">IMPORT a file to Browser Local Storage</label> 
 <input type="file" accept="text/json" id="importLocalStorage" style="display: none;"></input>
-<button type="button" class="defaultButton" id="addNode">Create Node</button>
 <button type="button" class="defaultButton" id="checkDateTimeId">Check JSON File Date/Time</button>
 
 
@@ -267,17 +279,30 @@ function checkFileDateTime(e){
 
  //function to import a MF into browser and LocalStorage
 function importLocalStorage(e){
+
+    var fileInput = e.target.files;
+    var testDateTime = fileInput.lastModifiedDate;
+    console.log("testDateTime:::",e.target.files[0].lastModified);
+
     //button to choose file and load json file
     let fileChosen = document.getElementById("importLocalStorage");
+
+    
     //create a new reader object to load file and read it
     let reader = new FileReader();
     //console.log(fileChosen.files[0]);
     //console.log("filechosen",fileChosen.files[0].name);
-    console.log("filechosen",fileChosen.files[0].lastModifiedDate);
-    var lastModifiedDateTimeFileString = fileChosen.files[0].lastModifiedDate;
+    console.log("filechosen",e.target.files[0].lastModified);
+    var lastModifiedDateTimeFileString = e.target.files[0].lastModified;
+    //debug and show date and time
+    let fileDateTime = new Date(lastModifiedDateTimeFileString);
 
+    //debug date and time
+    let date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
+    let time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
+    
     var lastModifiedDateTime = document.getElementById("mfDateTimeLastSave");
-    lastModifiedDateTime.innerHTML = "Imported File Last Modified Date:::"+lastModifiedDateTimeFileString;
+    lastModifiedDateTime.innerHTML = "Imported File Last Modified Date:::"+date+"  "+time;
     
     reader.readAsText(fileChosen.files[0]);
     reader.addEventListener('load', (e) => {
@@ -1846,6 +1871,3 @@ function createMoveNode(e){
 </script>    
 </body>
 </html>
-
-
-
