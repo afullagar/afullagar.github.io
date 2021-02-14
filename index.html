@@ -15,6 +15,7 @@
 - add color pickers and fix a few minor bugs -v1.42
 - fies and change the way the date time is checked on file import - legacy removed and supported firefox added - v1.43
 - added timedate string to html title for static saving and added save app version into Local Storage to know what app version worked last time - v1.44
+- add font size to node menu options - v1.45
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -68,7 +69,7 @@ html, body {
     border-top-left-radius: 5% 10%;
     border-bottom-right-radius: 5% 10%;
     opacity: 1.0;
-    font-size:10px;
+    /*font-size:10px;*/
     -webkit-webkit-user-drag: element; 
     overscroll-behavior: none;
     overflow: visible;
@@ -78,6 +79,12 @@ html, body {
     background-color: red;
 }
 
+.formInput {
+    float: right;
+    text-align: right;
+    clear: both;
+
+}
 .colorInput {
     float: right;
     clear: both;
@@ -110,7 +117,7 @@ html, body {
 //Use Strict
 'use strict';
 //Mindfully App version - in case different versions get incompatible - store the version with the mindmap so we know what version may load it.
-var mfAppVersion = "1.44";
+var mfAppVersion = "1.45";
 var startX = 0;
 var startY = 0;
 var deviationX = 0;
@@ -175,7 +182,9 @@ else if (browserReport.search("chrome") != -1){
 
   //add eventlistner for clicking into a node
   document.addEventListener("click", createNodeText);
-
+  //debug
+  document.addEventListener("mousedown", createMoveNode);
+  
   document.addEventListener("dragstart", createMoveNode);
   
   //hover modal test
@@ -465,6 +474,7 @@ function importLocalStorage(e){
     });
 }
 
+//pop up right click menu form
 function createForm(e) { 
    e.preventDefault();
   var nodeSearch = e.target.id;
@@ -478,11 +488,14 @@ function createForm(e) {
 
             //get current colors
             var bgNodeColorTemp = mfJsonNodeTempObj["bgNodeColor"];
-            console.log("bgNodeColorTemp",bgNodeColorTemp);
+            //console.log("bgNodeColorTemp",bgNodeColorTemp);
             var fontNodeColorTemp = mfJsonNodeTempObj["fontNodeColor"];
-            console.log("fontNodeColorTemp",fontNodeColorTemp);
+            //console.log("fontNodeColorTemp",fontNodeColorTemp);
             var borderNodeColorTemp =  mfJsonNodeTempObj["borderNodeColor"];
-            console.log("borderNodeColorTemp",borderNodeColorTemp);
+            //console.log("borderNodeColorTemp",borderNodeColorTemp);
+            //font size
+            var fontSizeNodeTemp =  mfJsonNodeTempObj["fontSizeNode"];
+
         }
         catch (error) {console.error(error); console.log("mfJsonNodeTempObj",mfJsonNodeTempObj);}
 
@@ -583,18 +596,45 @@ function createForm(e) {
         //createChildNodeButton.style.top = e.clientY +"px";
         //createChildNodeButton.style.left = e.clientX +"px";
 
-            
+        //create font size input box
+        //label
+
+        //create label for gbcolorinput
+        var fontSizeLabel = document.createElement('label');
+        var fontSizeLabelText = document.createTextNode("Font Size");
+        fontSizeLabel.setAttribute("for","fontSizeInputId");
+        fontSizeLabel.setAttribute("id","label-fontSizeInputId");
+       
+        var fontSizeInput = document.createElement("input"); 
+        fontSizeInput.setAttribute("id", "fontSizeInputId"); 
+        fontSizeInput.setAttribute("type", "text");
+        fontSizeInput.setAttribute("size", "3");
+        if (fontSizeNodeTemp === undefined){
+            fontSizeInput.setAttribute("value", "12");
+        }
+        else{
+            fontSizeInput.setAttribute("value", fontSizeNodeTemp);
+        }
+        fontSizeInput.setAttribute("class","formInput");
+
+        fontSizeInput.style.backgroundColor = "#ffffff";            
         // Inserting a line break 
         form.appendChild(br.cloneNode());  
 
         // Append the Password to the form 
         form.appendChild(formNodeText);  
-        form.appendChild(br.cloneNode());  
-            
+        form.appendChild(br.cloneNode());
         
         // Append the submit button to the form 
-        form.appendChild(createChildNodeButton);  
+        form.appendChild(createChildNodeButton);
+         // Inserting a line break 
+         form.appendChild(br.cloneNode());    
         form.appendChild(br.cloneNode());
+        form.appendChild(fontSizeLabel);
+        fontSizeLabel.appendChild(fontSizeLabelText);
+        form.appendChild(fontSizeInput);
+         // Inserting a line break 
+         form.appendChild(br.cloneNode());  
         //DEBUG///////////////////////////////////////////////
         form.appendChild(br.cloneNode());   
         //create background css id
@@ -697,6 +737,48 @@ function createForm(e) {
                 deleteNode(nodeSearch);
                 deleteForm();
             
+        });
+
+        //Change FONT SIZE
+        if (fontSizeNodeTemp === undefined){
+            //set the default font size to initial storage value
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
+            tempNodeSearchObj["fontSizeNode"] = "12";
+            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
+            //make a string out of the child object
+            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
+            //save coords string into node name line
+            mfJson[nodeSearch] = tempNodeSearchString;
+            
+            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+        }
+        //Get color and change it for the node and save in localstorage
+        var fontSizeInput = document.getElementById("fontSizeInputId");
+        fontSizeInput.addEventListener("change", () => {
+            //load current node element and then change bg color
+            
+            var currentNode = document.getElementById(nodeSearch);
+            currentNode.style.fontSize = fontSizeInput.value;
+            
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+            var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
+            tempNodeSearchObj["fontSizeNode"] = fontSizeInput.value;
+            //console.log("tempNodeSearchOnj",tempNodeSearchObj);
+            //make a string out of the child object
+            var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
+            //save coords string into node name line
+            mfJson[nodeSearch] = tempNodeSearchString;
+            
+            ///console.log("mfJson[nodeName]",mfJson[childNodeName]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
         });
 
 
@@ -996,6 +1078,7 @@ function createChildNode(e){
     x.style.position = "absolute";
     x.style.backgroundColor = "#ffffff";
     x.style.color = "#000000";
+    x.style.fontSize = "12px";
     var nodeBorderColor = "#000000";
     x.style.borderColor = nodeBorderColor;
     x.style.top = Math.floor(Math.random() * Math.floor(window.innerHeight - (window.innerHeight/3)))+"px";
@@ -1068,6 +1151,8 @@ function createChildNode(e){
     tempChildNodeObj["bgNodeColor"] = "#ffffff";
     tempChildNodeObj["fontNodeColor"] = "#000000";
     tempChildNodeObj["borderNodeColor"] = nodeBorderColor;
+    tempChildNodeObj["fontSizeNode"] = "12";
+    
     console.log("tempChildNodeObj",tempChildNodeObj);
     //make a string out of the child object
     var tempChildNodeString = JSON.stringify(tempChildNodeObj);
@@ -1391,6 +1476,7 @@ function retrieveSavedNodeFromLocalStorage(tempParentNodeId,nodeID,result){
     x.setAttribute("id",nodeID);
     x.setAttribute("class","defaultNode");
     x.style.position = "absolute";
+    x.style.fontSize = nodeNameObj["fontSizeNode"]+"px";
     x.style.backgroundColor = nodeNameObj["bgNodeColor"];
     x.style.color = nodeNameObj["fontNodeColor"];
 
@@ -1454,6 +1540,7 @@ function createNode(e){
     x.style.backgroundColor = "#ffffff";
     x.style.color = "#000000";
     x.style.borderColor = "#000000";
+    x.style.fontStyle = "16px"
     
     x.setAttribute("draggable","true");
 
@@ -1500,7 +1587,8 @@ function createNode(e){
     tempNodeCoordsObj["bgNodeColor"] = "#ffffff";
     tempNodeCoordsObj["fontNodeColor"] = "#000000";
     tempNodeCoordsObj["borderNodeColor"] = "#000000";
-    
+    tempNodeCoordsObj["fontSizeNode"] = "16";
+
     var tempNodeCoordsStringify = JSON.stringify(tempNodeCoordsObj);
     mfJson[nodeName] = tempNodeCoordsStringify;
     
@@ -1694,7 +1782,7 @@ function createMoveNode(e){
         tempNodeObj["bgNodeColor"] = nodeNameObj["bgNodeColor"];
         tempNodeObj["fontNodeColor"] = nodeNameObj["fontNodeColor"];
         tempNodeObj["borderNodeColor"] = nodeNameObj["borderNodeColor"];
-
+        tempNodeObj["fontSizeNode"] = nodeNameObj["fontSizeNode"];
         //parent coords dont change
         tempNodeObj["lineEndX"] = lineEndX;
         tempNodeObj["lineEndY"] = lineEndY;
@@ -1826,6 +1914,7 @@ function createMoveNode(e){
             tempNodeObj["bgNodeColor"] = nodeNameObj["bgNodeColor"];
             tempNodeObj["fontNodeColor"] = nodeNameObj["fontNodeColor"];
             tempNodeObj["borderNodeColor"] = nodeNameObj["borderNodeColor"];
+            tempNodeObj["fontSizeNode"] = nodeNameObj["fontSizeNode"];
 
             //parent coords dont change
             tempNodeObj["lineEndX"] = lineEndX;
@@ -1915,3 +2004,4 @@ function createMoveNode(e){
 </script>    
 </body>
 </html>
+
