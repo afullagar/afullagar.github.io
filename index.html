@@ -185,7 +185,8 @@ else if (browserReport.search("chrome") != -1){
   //debug
   document.addEventListener("mousedown", createMoveNode);
   
-  document.addEventListener("dragstart", createMoveNode);
+  //meant for firefox bugs
+  //document.addEventListener("dragstart", createMoveNode);
   
   //hover modal test
   document.addEventListener("contextmenu",createForm);
@@ -746,7 +747,7 @@ function createForm(e) {
             //load storage vars so can append
             var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
             var tempNodeSearchObj = JSON.parse(mfJson[nodeSearch]); 
-            tempNodeSearchObj["fontSizeNode"] = "12";
+            tempNodeSearchObj["fontSizeNode"] = "10";
             //console.log("tempNodeSearchOnj",tempNodeSearchObj);
             //make a string out of the child object
             var tempNodeSearchString = JSON.stringify(tempNodeSearchObj);
@@ -1151,7 +1152,7 @@ function createChildNode(e){
     tempChildNodeObj["bgNodeColor"] = "#ffffff";
     tempChildNodeObj["fontNodeColor"] = "#000000";
     tempChildNodeObj["borderNodeColor"] = nodeBorderColor;
-    tempChildNodeObj["fontSizeNode"] = "12";
+    tempChildNodeObj["fontSizeNode"] = "10";
     
     console.log("tempChildNodeObj",tempChildNodeObj);
     //make a string out of the child object
