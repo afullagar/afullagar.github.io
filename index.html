@@ -16,6 +16,7 @@
 - fies and change the way the date time is checked on file import - legacy removed and supported firefox added - v1.43
 - added timedate string to html title for static saving and added save app version into Local Storage to know what app version worked last time - v1.44
 - add font size to node menu options - v1.45
+- add custom color background and new global menu popup - v1.46 (15 Feb 2021) - WIP still not complete - removed continuous version control for now.
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -111,13 +112,14 @@ html, body {
 <label for="importLocalStorage" class="downloadButton">IMPORT a file to Browser Local Storage</label> 
 <input type="file" accept="text/json" id="importLocalStorage" style="display: none;"></input>
 <button type="button" class="defaultButton" id="checkDateTimeId">Check JSON File Date/Time</button>
+<button type="button" class="defaultButton" id="mainMenuId">Main Menu</button> 
 
 
 <script>
 //Use Strict
 'use strict';
 //Mindfully App version - in case different versions get incompatible - store the version with the mindmap so we know what version may load it.
-var mfAppVersion = "1.45";
+var mfAppVersion = "1.46";
 var startX = 0;
 var startY = 0;
 var deviationX = 0;
@@ -129,8 +131,8 @@ var active = false;
 //continuous write to file versioning control
 var versionControlBool = false;
 
-//prompt use and change variable
-versionControlBool = confirm("Do you want realtime version control to a file?");
+//prompt use and change variable - PAUSE VERSION CONTROL FOR A WHILE
+////versionControlBool = confirm("Do you want realtime version control to a file?");
 
 var layoutViewPortX = document.documentElement.clientWidth;
 console.log("layout viewport X:::",layoutViewPortX);
@@ -178,6 +180,11 @@ else if (browserReport.search("chrome") != -1){
   //export a local storage click
   document.getElementById("importLocalStorage").addEventListener("change", importLocalStorage);  
   
+  
+  //export a main menu click
+  document.getElementById("mainMenuId").addEventListener("click", createMainMenu);
+  
+  
   var localStorageKeyName; 
 
   //add eventlistner for clicking into a node
@@ -190,9 +197,6 @@ else if (browserReport.search("chrome") != -1){
   
   //hover modal test
   document.addEventListener("contextmenu",createForm);
-
-
-
 
 
 //TOUCH EVENTS//
@@ -243,6 +247,108 @@ function checkFileDateTime(e){
     //today.toLocaleString('default', { month: 'short' })
 
 }
+
+
+//createMainenu
+//pop up right click menu form
+function createMainMenu(e) { 
+   var nodeSearch = e.target.id;
+    //console.log("createForm Search:::",nodeSearch);
+  
+     //check if form exists - if so delete
+      let formDom = document.getElementById("formDivContainer");
+      if (formDom !== null){
+          while (formDom.firstChild) {
+              formDom.removeChild(formDom.firstChild);
+          }
+
+          var x = document.getElementById("formDivContainer");
+          ///console.log("Form=",x);
+          x.remove();
+      }
+    
+        var br = document.createElement("br"); 
+        // Create a form synamically 
+        var form = document.createElement("form"); 
+        form.setAttribute("id", "formDivContainer"); 
+        
+        form.style.position = "absolute";
+        form.style.backgroundColor = "lightgrey";
+        form.style.borderStyle = "none";
+        form.style.width = 190 +"px";
+        //form.style.left = 200 +"px";
+        ///console.log(e);
+        // Create an input element for nodeid 
+        var formNodeId = document.createElement("input");
+        formNodeId.setAttribute("id", "formNodeId");  
+        formNodeId.setAttribute("type", "text"); 
+        formNodeId.setAttribute("name", "formNodeId"); 
+        formNodeId.setAttribute("placeholder", e.target.id); 
+        formNodeId.setAttribute("value", e.target.id); 
+        
+
+        //formNodeId.style.position = "relative";
+        formNodeId.style.backgroundColor = "lightgrey";
+        //formNodeId.style.top = (e.clientY+20) +"px";
+        //formNodeId.style.left = (e.clientX+20) +"px";
+        
+        // Append the full name input to the form 
+        form.appendChild(formNodeId);  
+        
+        //get node id text value
+        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::e.target.id.value:::",e.target.id);
+        var formNodeTextId = document.getElementById(e.target.id);
+        var formNodeTextValue = formNodeTextId.value;
+        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::formNodeTextValue:::",formNodeTextValue);
+      
+        // Create an input element for password 
+        var formNodeText = document.createElement("input");
+        formNodeText.setAttribute("id", "formNodeText");  
+        formNodeText.setAttribute("type", "text"); 
+        formNodeText.setAttribute("name", "formNodeText"); 
+        formNodeText.setAttribute("placeholder", formNodeTextValue); 
+        
+        //formNodeText.style.position = "relative";
+        formNodeText.style.backgroundColor = "lightgrey";
+        //formNodeText.style.top = e.clientY +"px";
+        //formNodeText.style.left = e.clientX +"px";
+
+        // Append the node text 
+        form.appendChild(formNodeText);  
+        
+
+        // create a submit button 
+        var s = document.createElement("input"); 
+        s.setAttribute("id", "submitClose"); 
+        s.setAttribute("type", "button"); 
+        s.setAttribute("value", "Close"); 
+        s.style.backgroundColor = "green";
+        // Append the submit button to the form 
+        form.appendChild(s); 
+        form.appendChild(br.cloneNode());  
+
+        //hide/unhide child nodes
+        var hideUnhideChild = document.createElement("input"); 
+        hideUnhideChild.setAttribute("id", "submitHideUnhide"); 
+        hideUnhideChild.setAttribute("type", "button"); 
+        hideUnhideChild.setAttribute("value", "Hide/Unhide Child"); 
+        hideUnhideChild.style.backgroundColor = "orange";
+        // Append the submit button to the form 
+        form.appendChild(hideUnhideChild); 
+        
+        //form.appendChild(selectBgColor);
+        form.appendChild(br.cloneNode()); 
+        document.getElementsByTagName("body")[0].appendChild(form); 
+        //document.getElementById("formDiv").appendChild("formDivContainer");
+        var f = document.getElementById("formDivContainer") 
+        f.style.postion = "relative";
+        f.style.left = (e.clientX+(-200))+"px";
+        f.style.top = (e.clientY+(-200))+"px";
+
+        document.getElementById("submitClose").addEventListener("click", deleteForm);
+     
+} 
+
 
 
  function exportLocalStorage(e){
