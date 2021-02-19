@@ -18,6 +18,7 @@
 - add font size to node menu options - v1.45
 - add custom color background and new global menu popup - v1.46 (15 Feb 2021) - WIP still not complete - removed continuous version control for now.
 - fix background body color (whole canvas) - v1.47
+- add main menu option to hide menue icons when using CTRL-S to save as a html mindmap for offline vieing or emailing etc. - v1.48
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -87,11 +88,16 @@ html, body {
     clear: both;
 
 }
+
 .colorInput {
     float: right;
     clear: both;
 }
 
+.buttonRightInput {
+    float: right;
+    clear: both;
+}
 
 </style>
 </head>
@@ -110,7 +116,7 @@ html, body {
 
 <button type="button" class="defaultButton" id="loadLocalStorage">LOAD from Browser Local Storage</button>
 <button type="button" class="defaultButton" id="exportLocalStorage">EXPORT Browser Local Storage to a File</button>
-<label for="importLocalStorage" class="downloadButton">IMPORT a file to Browser Local Storage</label> 
+<label for="importLocalStorage" class="downloadButton" id="downloadButtonId">IMPORT a file to Browser Local Storage</label> 
 <input type="file" accept="text/json" id="importLocalStorage" style="display: none;"></input>
 <button type="button" class="defaultButton" id="checkDateTimeId">Check JSON File Date/Time</button>
 <button type="button" class="defaultButton" id="mainMenuId">Main Menu</button> 
@@ -296,8 +302,6 @@ function createMainMenu(e) {
         formNodeId.setAttribute("id", "formNodeId");  
         formNodeId.setAttribute("type", "color"); 
         
-        
-
         //formNodeId.style.position = "relative";
         formNodeId.style.backgroundColor = "lightgrey";
         //formNodeId.style.top = (e.clientY+20) +"px";
@@ -312,7 +316,7 @@ function createMainMenu(e) {
         // Append the submit button to the form 
         form.appendChild(s); 
         form.appendChild(br.cloneNode());  
-
+        form.appendChild(br.cloneNode());
         //create label for gbcolorinput
         var mfBgColorLabel = document.createElement('label');
         var mfBgColorLabelText = document.createTextNode("Background Color");
@@ -332,10 +336,28 @@ function createMainMenu(e) {
         form.appendChild(br.cloneNode());
         form.appendChild(br.cloneNode());
         
-        
+        //hide menu items so CTRL-S does not show them
 
-
-       
+            //create label for gbcolorinput
+        var mfMenuHideLabel = document.createElement('label');
+        var mfMenuHideLabelText = document.createTextNode("Hide Menus");
+        mfMenuHideLabel.setAttribute("for","mfMenuHideId");
+        mfMenuHideLabel.setAttribute("id","label-mfMenuHideId");
+        form.appendChild(mfMenuHideLabel);
+        mfMenuHideLabel.appendChild(mfMenuHideLabelText);
+        //bac color select statement - simple version - no rgb
+        var mfMenuHide = document.createElement('input');
+        mfMenuHide.setAttribute("name","mfMenuHideId");
+        mfMenuHide.setAttribute("id","mfMenuHideId");
+        //lookedup from local storage
+        mfMenuHide.setAttribute("value","Hide Menus");
+        mfMenuHide.setAttribute("type","button");
+        mfMenuHide.setAttribute("class","buttonRightInput");
+        //mfBgColor.setAttribute("class","colorInput");
+        form.appendChild(mfMenuHide);
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
+    
         //form.appendChild(selectBgColor);
         form.appendChild(br.cloneNode()); 
         document.getElementsByTagName("body")[0].appendChild(form); 
@@ -344,6 +366,68 @@ function createMainMenu(e) {
         f.style.postion = "relative";
         f.style.left = (e.clientX+(-200))+"px";
         f.style.top = (e.clientY+(-200))+"px";
+
+        //hide all menu items
+        document.getElementById("mfMenuHideId").addEventListener("click", () => {
+
+        //get all IDs
+
+        var addNodeHide = document.getElementById("addNode");
+        addNodeHide.style.display = "none";
+
+        var createLocalStorageHide = document.getElementById("createLocalStorage");
+        createLocalStorageHide.style.display = "none";
+
+        var loadLocalStorageHide = document.getElementById("loadLocalStorage");
+        loadLocalStorageHide.style.display = "none";
+
+        var exportLocalStorageHide = document.getElementById("exportLocalStorage");
+        exportLocalStorageHide.style.display = "none";
+
+        var downloadButtonHide = document.getElementById("downloadButtonId");
+        downloadButtonHide.style.display = "none";
+
+        var importLocalStorageHide = document.getElementById("importLocalStorage");
+        importLocalStorageHide.style.display = "none";
+
+        var checkDateTimeHide = document.getElementById("checkDateTimeId");
+        checkDateTimeHide.style.display = "none";
+
+        var mainMenuHide = document.getElementById("mainMenuId");
+        mainMenuHide.style.display = "none";
+        
+        //save file then show menu after timeout
+        setTimeout(()=> {
+
+        //get all IDs
+
+        var addNodeHide = document.getElementById("addNode");
+        addNodeHide.style.display = "unset";
+
+        var createLocalStorageHide = document.getElementById("createLocalStorage");
+        createLocalStorageHide.style.display = "unset";
+
+        var loadLocalStorageHide = document.getElementById("loadLocalStorage");
+        loadLocalStorageHide.style.display = "unset";
+
+        var exportLocalStorageHide = document.getElementById("exportLocalStorage");
+        exportLocalStorageHide.style.display = "unset";
+
+        var downloadButtonHide = document.getElementById("downloadButtonId");
+        downloadButtonHide.style.display = "unset";
+
+        var importLocalStorageHide = document.getElementById("importLocalStorage");
+        importLocalStorageHide.style.display = "none";
+
+        var checkDateTimeHide = document.getElementById("checkDateTimeId");
+        checkDateTimeHide.style.display = "unset";
+
+        var mainMenuHide = document.getElementById("mainMenuId");
+        mainMenuHide.style.display = "unset";
+        
+        }, 10000);
+
+        });
 
         document.getElementById("submitClose").addEventListener("click", deleteForm);
 
