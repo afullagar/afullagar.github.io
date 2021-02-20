@@ -18,7 +18,8 @@
 - add font size to node menu options - v1.45
 - add custom color background and new global menu popup - v1.46 (15 Feb 2021) - WIP still not complete - removed continuous version control for now.
 - fix background body color (whole canvas) - v1.47
-- add main menu option to hide menue icons when using CTRL-S to save as a html mindmap for offline viewing or emailing etc. - v1.48
+- add main menu option to hide menue icons when using CTRL-S to save as a html mindmap for offline vieing or emailing etc. - v1.48
+- fix position of new child nodes - too random. - round svg line co-ords when calc from mid of rect. - v1.49 
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -126,7 +127,7 @@ html, body {
 //Use Strict
 'use strict';
 //Mindfully App version - in case different versions get incompatible - store the version with the mindmap so we know what version may load it.
-var mfAppVersion = "1.46";
+var mfAppVersion = "1.49";
 var startX = 0;
 var startY = 0;
 var deviationX = 0;
@@ -364,8 +365,8 @@ function createMainMenu(e) {
         //document.getElementById("formDiv").appendChild("formDivContainer");
         var f = document.getElementById("formDivContainer") 
         f.style.postion = "relative";
-        f.style.left = (e.clientX+(-200))+"px";
-        f.style.top = (e.clientY+(-200))+"px";
+        f.style.left = (e.clientX+(-250))+"px";
+        f.style.top = (e.clientY+(-250))+"px";
 
         //hide all menu items
         document.getElementById("mfMenuHideId").addEventListener("click", () => {
@@ -425,7 +426,7 @@ function createMainMenu(e) {
         var mainMenuHide = document.getElementById("mainMenuId");
         mainMenuHide.style.display = "unset";
         
-        }, 10000);
+        }, 15000);
 
         });
 
@@ -839,14 +840,14 @@ function createForm(e) {
         
         // Append the submit button to the form 
         form.appendChild(createChildNodeButton);
-         // Inserting a line break 
-         form.appendChild(br.cloneNode());    
+        // Inserting a line break 
+        form.appendChild(br.cloneNode());    
         form.appendChild(br.cloneNode());
         form.appendChild(fontSizeLabel);
         fontSizeLabel.appendChild(fontSizeLabelText);
         form.appendChild(fontSizeInput);
-         // Inserting a line break 
-         form.appendChild(br.cloneNode());  
+        // Inserting a line break 
+        form.appendChild(br.cloneNode());  
         //DEBUG///////////////////////////////////////////////
         form.appendChild(br.cloneNode());   
         //create background css id
@@ -1241,13 +1242,14 @@ function deleteNode(nodeSearch){
     }    
 }
 
+//create child nodes
 function createChildNode(e){
-
     console.log("target id at begin of createChildNode",e.target.id);
     //get info about existing parent node
     let currentParentNode = document.getElementById("formNodeId");
     console.log("current parent node",currentParentNode);
     //console.log("Current PID=",e.target.id);
+    //parent node id
     var currentParentNodeId = currentParentNode.getAttribute("value");
     console.log("value ID:",currentParentNodeId);
 
@@ -1257,8 +1259,17 @@ function createChildNode(e){
     console.log("DEBUG:::parentNodeCoords:::",parentNodeCoords);
     
     //work out line start coords from the parent coords
-    let lineStartX = parentNodeCoords.left + (parentNodeCoords.width/2);
-    let lineStartY = parentNodeCoords.top + (parentNodeCoords.height/2);
+    let lineStartXRaw = parentNodeCoords.left + (parentNodeCoords.width/2);
+    let lineStartYRaw = parentNodeCoords.top + (parentNodeCoords.height/2);
+
+    let lineStartX = lineStartXRaw.toFixed(0);
+    console.log("lineStartXRaw:::",lineStartXRaw);
+    console.log("lineStartX rounded:::",lineStartX);
+    
+    let lineStartY = lineStartYRaw.toFixed(0);
+    console.log("lineStartYRaw:::",lineStartYRaw);
+    console.log("lineStartY rounded:::",lineStartY);
+    
 
     console.log("lineStartX/Y",lineStartX,":::",lineStartY);
     
@@ -1293,8 +1304,11 @@ function createChildNode(e){
     x.style.fontSize = "10px";
     var nodeBorderColor = "#000000";
     x.style.borderColor = nodeBorderColor;
-    x.style.top = Math.floor(Math.random() * Math.floor(window.innerHeight - (window.innerHeight/3)))+"px";
-    x.style.left = Math.floor(Math.random() * Math.floor(window.innerWidth - (window.innerWidth/3)))+"px";
+    //change to int base 10 - decimal and then add 15
+    x.style.top = (parseInt(lineStartY, 10)+75)+"px";
+    console.log("x.style.top:::",x.style.top);
+    x.style.left = (parseInt(lineStartX, 10)-75)+"px";
+    console.log("x.style.left:::",x.style.left);
     x.setAttribute("draggable","true");
 
     //append to childDiv document
@@ -1304,8 +1318,17 @@ function createChildNode(e){
     var childNodeCoordsObj = x.getBoundingClientRect();
 
     //work out line start coords from the parent coords
-    let lineEndX = childNodeCoordsObj.left + (childNodeCoordsObj.width/2);
-    let lineEndY = childNodeCoordsObj.top + (childNodeCoordsObj.height/2);
+    let lineEndXRaw = childNodeCoordsObj.left + (childNodeCoordsObj.width/2);
+    let lineEndYRaw = childNodeCoordsObj.top + (childNodeCoordsObj.height/2);
+
+    let lineEndX = lineEndXRaw.toFixed(0);
+    console.log("lineEndXRaw:::",lineEndXRaw);
+    console.log("lineEndX rounded:::",lineEndX);
+    
+    let lineEndY = lineEndYRaw.toFixed(0);
+    console.log("lineEndYRaw:::",lineEndYRaw);
+    console.log("lineEndY rounded:::",lineEndY);
+    
 
     console.log("lineEndX/Y",lineEndX,":::",lineEndY);
     //create the naem for the line that connects from child to parent node
@@ -1447,6 +1470,15 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,currentParentNodeId
             newLine.setAttribute('y2',yEnd);
             newLine.setAttribute("stroke", nodeBorderColor);
             childDivTemp.append(newLine);
+/*
+        var newPolyLine = document.createElementNS(xmlns,'polyline');
+            newPolyLine.setAttribute('id',childNodeNameLine);
+            newPolyLine.setAttribute("points",(xStart+","+yStart)+" "+(xStart+5+","+(yStart+5))+" "+((xStart+10)+","+(yStart+10))+" "+((xStart+15)+","+(yStart+15))+" "+((xStart+20)+","+(yStart+20))+" "+((xEnd-10)+","+(yEnd-10))+" "+((xEnd-5)+","+(yEnd-5))+" "+(xEnd+","+yEnd));
+            newPolyLine.setAttribute("fill", "none");
+            
+            newPolyLine.setAttribute("stroke", nodeBorderColor);
+            childDivTemp.append(newPolyLine);
+*/
     }
 }
 
@@ -1478,6 +1510,7 @@ if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || 
         var svgId = document.getElementById("svgParent");
         svgId.appendChild(svgElem);
     }
+
     var existingLine = document.getElementById(childNodeNameLine);
     //var newLine = document.createElementNS(xmlns,'line');
         //existingLine.setAttribute('id',childNodeNameLine);
@@ -1485,6 +1518,16 @@ if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || 
         existingLine.setAttribute('y1',yStart);
         existingLine.setAttribute('x2',xEnd);
         existingLine.setAttribute('y2',yEnd);
+/*
+var existingLine = document.getElementById(childNodeNameLine);
+            //existingLine.setAttribute('id',childNodeNameLine);
+            existingLine.setAttribute("points",(xStart+","+yStart)+" "+(xStart+5+","+(yStart+5))+" "+((xStart+10)+","+(yStart+10))+" "+((xStart+15)+","+(yStart+15))+" "+((xStart+20)+","+(yStart+20))+" "+((xEnd-10)+","+(yEnd-10))+" "+((xEnd-5)+","+(yEnd-5))+" "+(xEnd+","+yEnd));
+            //existingLine.setAttribute("fill", "none");
+            
+            //newPolyLine.setAttribute("stroke", nodeBorderColor);
+            childDivTemp.append(newPolyLine);
+*/
+
 }
 }
 
@@ -1772,8 +1815,20 @@ function createNode(e){
     var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
     
     //work out line start coords from the parent coords -  //required if child nodes move and they will need the upstream coords
-    let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
-    let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+    let lineEndXRaw = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+    let lineEndYRaw = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+    
+    let lineEndX = lineEndXRaw.toFixed(0);
+    console.log("lineEndXRaw:::",lineEndXRaw);
+    console.log("lineEndX rounded:::",lineEndX);
+    
+    let lineEndY = lineEndYRaw.toFixed(0);
+    console.log("lineEndYRaw:::",lineEndYRaw);
+    console.log("lineEndY rounded:::",lineEndY);
+    
+
+    
+    
     //DEBUG:::DIV
     //initialise temp object
     var tempDivObj = {};
@@ -1962,9 +2017,18 @@ function createMoveNode(e){
         //save to local storage
         var nodeCoordsObj = moveXY.getBoundingClientRect();
         //work out line start coords from the parent coords
-        let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
-        let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+        let lineEndXRaw = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+        let lineEndYRaw = nodeCoordsObj.top + (nodeCoordsObj.height/2);
         
+        let lineEndX = lineEndXRaw.toFixed(0);
+        console.log("lineEndXRaw:::",lineEndXRaw);
+        console.log("lineEndX rounded:::",lineEndX);
+    
+        let lineEndY = lineEndYRaw.toFixed(0);
+        console.log("lineEndYRaw:::",lineEndYRaw);
+        console.log("lineEndY rounded:::",lineEndY);
+    
+
         
         console.log("lineEndX for Parent or startx of child",lineEndX);
         console.log("lineEndY for Parent or startY of child",lineEndY);
@@ -2095,9 +2159,19 @@ function createMoveNode(e){
             //save to local storage
             var nodeCoordsObj = moveXY.getBoundingClientRect();
             //work out line start coords from the parent coords
-            let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
-            let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
-        
+            let lineEndXRaw = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+            let lineEndYRaw = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+            
+            let lineEndX = lineEndXRaw.toFixed(0);
+            console.log("lineEndXRaw:::",lineEndXRaw);
+            console.log("lineEndX rounded:::",lineEndX);
+            
+            let lineEndY = lineEndYRaw.toFixed(0);
+            console.log("lineEndYRaw:::",lineEndYRaw);
+            console.log("lineEndY rounded:::",lineEndY);
+    
+
+
             console.log("lineEndX for Parent or startx of child",lineEndX);
             console.log("lineEndY for Parent or startY of child",lineEndY);
         
