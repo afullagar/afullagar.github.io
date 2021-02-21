@@ -25,6 +25,12 @@
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
+    
+    <link rel="manifest" href="manifest.json"/>
+    <meta name="theme-color" content="#3367D6"/>
+    <link rel="apple-touch-icon" sizes="192x192" href="MindFully-192.png">
+    <script src='main.js'></script>
+        
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title id="mfHtmlTitle">MindFully Maps</title>
 
@@ -128,6 +134,17 @@ html, body {
 <script>
 //Use Strict
 'use strict';
+    
+//PWA
+navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+        // registration worked
+        console.log('Registration succeeded.');
+     
+      }).catch(function(error) {
+        // registration failed
+        console.log('Registration failed with ' + error);
+      });
+//PWA    
 //Mindfully App version - in case different versions get incompatible - store the version with the mindmap so we know what version may load it.
 var mfAppVersion = "1.51";
 var startX = 0;
