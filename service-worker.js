@@ -1,12 +1,12 @@
 var cacheName = Date.now();
 var resourcesToCache = [
 	'/',
-    '/index.html',
-    '/dart-192.png',
+    'index.html',
+    'dart-192.png',
     'dart-512.png',
-    '/mindfully/main.js',
-    '/mindfully/service-worker.js',
-    '/mindfully/manifest.json'
+    'main.js',
+    'service-worker.js',
+    'manifest.json'
 ];
     
 self.addEventListener('install', event => {
