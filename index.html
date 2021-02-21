@@ -21,6 +21,7 @@
 - add main menu option to hide menue icons when using CTRL-S to save as a html mindmap for offline vieing or emailing etc. - v1.48
 - fix position of new child nodes - too random. - round svg line co-ords when calc from mid of rect. - v1.49 
 - add TAB and Insert button actions for add ChildNode and also DEL button to delete a node. - v1.50
+- remove rounding of svg co-ords - causing issues - v1.51
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -128,7 +129,7 @@ html, body {
 //Use Strict
 'use strict';
 //Mindfully App version - in case different versions get incompatible - store the version with the mindmap so we know what version may load it.
-var mfAppVersion = "1.50";
+var mfAppVersion = "1.51";
 var startX = 0;
 var startY = 0;
 var deviationX = 0;
@@ -1288,24 +1289,24 @@ function createChildNode(e){
     console.log("DEBUG:::parentNodeCoords:::",parentNodeCoords);
     
     //work out line start coords from the parent coords
-    let lineStartXRaw = parentNodeCoords.left + (parentNodeCoords.width/2);
-    let lineStartYRaw = parentNodeCoords.top + (parentNodeCoords.height/2);
+    let lineStartX = parentNodeCoords.left + (parentNodeCoords.width/2);
+    let lineStartY = parentNodeCoords.top + (parentNodeCoords.height/2);
 
-    let lineStartX = lineStartXRaw.toFixed(0);
-    console.log("lineStartXRaw:::",lineStartXRaw);
-    console.log("lineStartX rounded:::",lineStartX);
+    //let lineStartX = lineStartXRaw.toFixed(0);
+    //console.log("lineStartXRaw:::",lineStartXRaw);
+    //console.log("lineStartX rounded:::",lineStartX);
     
-    let lineStartY = lineStartYRaw.toFixed(0);
-    console.log("lineStartYRaw:::",lineStartYRaw);
-    console.log("lineStartY rounded:::",lineStartY);
+    //let lineStartY = lineStartYRaw.toFixed(0);
+    //console.log("lineStartYRaw:::",lineStartYRaw);
+    //console.log("lineStartY rounded:::",lineStartY);
     
 
-    console.log("lineStartX/Y",lineStartX,":::",lineStartY);
+    //console.log("lineStartX/Y",lineStartX,":::",lineStartY);
     
     //Get upstream DIV
     var parentDivId = "div-"+currentParentNodeId;
     var parentDiv = document.getElementById(parentDivId);
-    console.log("parentDiv:::",parentDiv);
+    //console.log("parentDiv:::",parentDiv);
     //ID created with date as unique hash  
      var childNodeName = "node-"+Date.now();
     
@@ -1313,7 +1314,7 @@ function createChildNode(e){
     //DEBUG:::DIV
     var childDiv = document.createElement("DIV");
     var childDivNameId = "div-"+ childNodeName;
-    console.log("childDivNameId:::",childDivNameId);
+    //console.log("childDivNameId:::",childDivNameId);
     childDiv.setAttribute("id",childDivNameId);
     
     console.log("childDiv:::",childDiv);
@@ -1347,19 +1348,19 @@ function createChildNode(e){
     var childNodeCoordsObj = x.getBoundingClientRect();
 
     //work out line start coords from the parent coords
-    let lineEndXRaw = childNodeCoordsObj.left + (childNodeCoordsObj.width/2);
-    let lineEndYRaw = childNodeCoordsObj.top + (childNodeCoordsObj.height/2);
+    let lineEndX = childNodeCoordsObj.left + (childNodeCoordsObj.width/2);
+    let lineEndY = childNodeCoordsObj.top + (childNodeCoordsObj.height/2);
 
-    let lineEndX = lineEndXRaw.toFixed(0);
-    console.log("lineEndXRaw:::",lineEndXRaw);
-    console.log("lineEndX rounded:::",lineEndX);
+    //let lineEndX = lineEndXRaw.toFixed(0);
+    //console.log("lineEndXRaw:::",lineEndXRaw);
+    //console.log("lineEndX rounded:::",lineEndX);
     
-    let lineEndY = lineEndYRaw.toFixed(0);
-    console.log("lineEndYRaw:::",lineEndYRaw);
-    console.log("lineEndY rounded:::",lineEndY);
+    //let lineEndY = lineEndYRaw.toFixed(0);
+    //console.log("lineEndYRaw:::",lineEndYRaw);
+    //console.log("lineEndY rounded:::",lineEndY);
     
 
-    console.log("lineEndX/Y",lineEndX,":::",lineEndY);
+    //console.log("lineEndX/Y",lineEndX,":::",lineEndY);
     //create the naem for the line that connects from child to parent node
     var childNodeNameLine = "line-"+childNodeName;
     var childDivNameLine = "div-"+childNodeNameLine;
@@ -1373,8 +1374,8 @@ function createChildNode(e){
     
     //DEBUG:::DIVS
     //initialise temp object
-    console.log("mfJson:::",mfJson);
-    console.log('parentDivId:::',parentDivId);
+    //console.log("mfJson:::",mfJson);
+    //console.log('parentDivId:::',parentDivId);
     try{
         var tempDivParentObj = JSON.parse(mfJson[parentDivId]);
         tempDivParentObj[childDivNameId] = childDivNameId;
@@ -1846,20 +1847,17 @@ function createNode(e){
     var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
     
     //work out line start coords from the parent coords -  //required if child nodes move and they will need the upstream coords
-    let lineEndXRaw = nodeCoordsObj.left + (nodeCoordsObj.width/2);
-    let lineEndYRaw = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+    let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+    let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
     
-    let lineEndX = lineEndXRaw.toFixed(0);
-    console.log("lineEndXRaw:::",lineEndXRaw);
-    console.log("lineEndX rounded:::",lineEndX);
+    //let lineEndX = lineEndXRaw.toFixed(0);
+    //console.log("lineEndXRaw:::",lineEndXRaw);
+    //console.log("lineEndX rounded:::",lineEndX);
     
-    let lineEndY = lineEndYRaw.toFixed(0);
-    console.log("lineEndYRaw:::",lineEndYRaw);
-    console.log("lineEndY rounded:::",lineEndY);
-    
-
-    
-    
+    //let lineEndY = lineEndYRaw.toFixed(0);
+    //console.log("lineEndYRaw:::",lineEndYRaw);
+    //console.log("lineEndY rounded:::",lineEndY);
+        
     //DEBUG:::DIV
     //initialise temp object
     var tempDivObj = {};
@@ -1893,7 +1891,7 @@ function createNode(e){
     var tempNodeCoordsStringify = JSON.stringify(tempNodeCoordsObj);
     mfJson[nodeName] = tempNodeCoordsStringify;
     
-    console.log("mfJson[nodeName]",mfJson[nodeName]);
+    //console.log("mfJson[nodeName]",mfJson[nodeName]);
     //store nodename key
     localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
    
@@ -1902,7 +1900,7 @@ function createNode(e){
         
         //DEBUG - Continous save
         exportLocalStorage();
-        console.log("export backup:::createNode");
+        //console.log("export backup:::createNode");
     }
     else{
         console.log("versionControlLog status:::",versionControlBool);
@@ -1912,13 +1910,13 @@ function createNode(e){
 function createNodeText(e){
     //e.preventDefault();
     let nodeSearch = e.target.id;
-    console.log(e);
+    //console.log(e);
     //let localStorageKeyName = e.view.localStorageKeyName;
 
     
-    console.log("localStorageKeyName:",localStorageKeyName);
+    //console.log("localStorageKeyName:",localStorageKeyName);
     
-    console.log("e.view:",e.view);
+    //console.log("e.view:",e.view);
     
     //console.log("createnodetext Search:::",nodeSearch);
     //if (nodeSearch.search("node") != -1){
@@ -1934,7 +1932,7 @@ function createNodeText(e){
             inputId.setAttribute("value",input);
             //add text as well to TEXTAREA node in between brackets 
             inputId.textContent = input;  
-            console.log(e.target.id,":::",input);
+            //console.log(e.target.id,":::",input);
 
             var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
     
@@ -1954,7 +1952,7 @@ function createNodeText(e){
         if (nodeSearch.startsWith("node") === true){
             //DEBUG - Continous save
             exportLocalStorage();
-            console.log("export backup:::createNodeText");
+            //console.log("export backup:::createNodeText");
         }
     }
     else{
@@ -2048,21 +2046,21 @@ function createMoveNode(e){
         //save to local storage
         var nodeCoordsObj = moveXY.getBoundingClientRect();
         //work out line start coords from the parent coords
-        let lineEndXRaw = nodeCoordsObj.left + (nodeCoordsObj.width/2);
-        let lineEndYRaw = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+        let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+        let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
         
-        let lineEndX = lineEndXRaw.toFixed(0);
-        console.log("lineEndXRaw:::",lineEndXRaw);
-        console.log("lineEndX rounded:::",lineEndX);
+        //let lineEndX = lineEndXRaw.toFixed(0);
+        //console.log("lineEndXRaw:::",lineEndXRaw);
+        //console.log("lineEndX rounded:::",lineEndX);
     
-        let lineEndY = lineEndYRaw.toFixed(0);
-        console.log("lineEndYRaw:::",lineEndYRaw);
-        console.log("lineEndY rounded:::",lineEndY);
+        //let lineEndY = lineEndYRaw.toFixed(0);
+        //console.log("lineEndYRaw:::",lineEndYRaw);
+        //console.log("lineEndY rounded:::",lineEndY);
     
 
         
-        console.log("lineEndX for Parent or startx of child",lineEndX);
-        console.log("lineEndY for Parent or startY of child",lineEndY);
+        //console.log("lineEndX for Parent or startx of child",lineEndX);
+        //console.log("lineEndY for Parent or startY of child",lineEndY);
         
         //add the node coords 
             //initialise temp object
@@ -2190,21 +2188,18 @@ function createMoveNode(e){
             //save to local storage
             var nodeCoordsObj = moveXY.getBoundingClientRect();
             //work out line start coords from the parent coords
-            let lineEndXRaw = nodeCoordsObj.left + (nodeCoordsObj.width/2);
-            let lineEndYRaw = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+            let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+            let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
             
-            let lineEndX = lineEndXRaw.toFixed(0);
-            console.log("lineEndXRaw:::",lineEndXRaw);
-            console.log("lineEndX rounded:::",lineEndX);
+            //let lineEndX = lineEndXRaw.toFixed(0);
+            //console.log("lineEndXRaw:::",lineEndXRaw);
+            //console.log("lineEndX rounded:::",lineEndX);
             
-            let lineEndY = lineEndYRaw.toFixed(0);
-            console.log("lineEndYRaw:::",lineEndYRaw);
-            console.log("lineEndY rounded:::",lineEndY);
-    
-
-
-            console.log("lineEndX for Parent or startx of child",lineEndX);
-            console.log("lineEndY for Parent or startY of child",lineEndY);
+            //let lineEndY = lineEndYRaw.toFixed(0);
+            //console.log("lineEndYRaw:::",lineEndYRaw);
+            //console.log("lineEndY rounded:::",lineEndY);
+            //console.log("lineEndX for Parent or startx of child",lineEndX);
+            //console.log("lineEndY for Parent or startY of child",lineEndY);
         
             //add the node coords 
             //initialise temp object
@@ -2324,6 +2319,7 @@ function createMoveNode(e){
 </script>    
 </body>
 </html>
+
 
 
 
