@@ -20,6 +20,7 @@
 - fix background body color (whole canvas) - v1.47
 - add main menu option to hide menue icons when using CTRL-S to save as a html mindmap for offline vieing or emailing etc. - v1.48
 - fix position of new child nodes - too random. - round svg line co-ords when calc from mid of rect. - v1.49 
+- add TAB and Insert button actions for add ChildNode and also DEL button to delete a node. - v1.50
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -213,6 +214,29 @@ document.addEventListener("touchstart", touch2Mouse,{passive: false});
 document.addEventListener("touchmove", touch2Mouse,{passive: false});
 //TOUCH EVENTS//
 document.addEventListener("touchend", touch2Mouse,{passive: false});
+
+//KEYBOARD shortcuts that provide some same right click menu options
+document.addEventListener("keydown",(e)=>{
+
+    console.log("KEY Pressed:::",e.keyCode);
+    console.log("DEBUG to see whats in e",e);
+    console.log("DEBUG:::e.target.id",e.target.id);
+    
+    //add child node - fast
+    if (e.keyCode === 9 || e.keyCode === 45){
+    
+        createChildNode(e);
+    }
+    //delete node - fast
+    else if (e.keyCode === 46){
+        var nodeDelete = e.target.id;
+        if (nodeDelete.startsWith("node-") === true){
+            deleteNode(e.target.id);
+        }
+    }    
+
+});
+
 
 function touch2Mouse(e)
 {
@@ -1250,7 +1274,12 @@ function createChildNode(e){
     console.log("current parent node",currentParentNode);
     //console.log("Current PID=",e.target.id);
     //parent node id
-    var currentParentNodeId = currentParentNode.getAttribute("value");
+    try{
+        var currentParentNodeId = currentParentNode.getAttribute("value");
+    }
+    catch{
+        var currentParentNodeId = e.target.id;
+    }
     console.log("value ID:",currentParentNodeId);
 
     //get coOrds
@@ -1799,7 +1828,9 @@ function createNode(e){
     x.style.color = "#000000";
     x.style.borderColor = "#000000";
     x.style.fontStyle = "16px"
-    
+    x.style.left = document.documentElement.clientWidth / 2;
+    x.style.top = document.documentElement.clientHeight / 2;
+        
     x.setAttribute("draggable","true");
 
     //append to document
