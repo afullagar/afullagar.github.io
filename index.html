@@ -22,15 +22,10 @@
 - fix position of new child nodes - too random. - round svg line co-ords when calc from mid of rect. - v1.49 
 - add TAB and Insert button actions for add ChildNode and also DEL button to delete a node. - v1.50
 - remove rounding of svg co-ords - causing issues - v1.51
+- add drop down menu for loading and choosing existing mindmaps stored in browser local storage - v1.52
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
-    
-    <link rel="manifest" href="manifest.json"/>
-    <meta name="theme-color" content="#3367D6"/>
-    <link rel="apple-touch-icon" sizes="192x192" href="MindFully-192.png">
-    <script src='main.js'></script>
-        
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title id="mfHtmlTitle">MindFully Maps</title>
 
@@ -95,7 +90,6 @@ html, body {
     float: right;
     text-align: right;
     clear: both;
-
 }
 
 .colorInput {
@@ -134,19 +128,8 @@ html, body {
 <script>
 //Use Strict
 'use strict';
-    
-//PWA
-navigator.serviceWorker.register('service-worker.js').then(function(registration) {
-        // registration worked
-        console.log('Registration succeeded.');
-     
-      }).catch(function(error) {
-        // registration failed
-        console.log('Registration failed with ' + error);
-      });
-//PWA    
 //Mindfully App version - in case different versions get incompatible - store the version with the mindmap so we know what version may load it.
-var mfAppVersion = "1.51";
+var mfAppVersion = "1.52";
 var startX = 0;
 var startY = 0;
 var deviationX = 0;
@@ -236,9 +219,9 @@ document.addEventListener("touchend", touch2Mouse,{passive: false});
 //KEYBOARD shortcuts that provide some same right click menu options
 document.addEventListener("keydown",(e)=>{
 
-    console.log("KEY Pressed:::",e.keyCode);
-    console.log("DEBUG to see whats in e",e);
-    console.log("DEBUG:::e.target.id",e.target.id);
+    //console.log("KEY Pressed:::",e.keyCode);
+    //console.log("DEBUG to see whats in e",e);
+    //console.log("DEBUG:::e.target.id",e.target.id);
     
     //add child node - fast
     if (e.keyCode === 9 || e.keyCode === 45){
@@ -286,7 +269,7 @@ function checkFileDateTime(e){
     console.log("current date-time",currentDateTimeString);
     //debug and show date and time
     var fileDateTime = new Date(getDateTimeInteger);
-    console.log(fileDateTime);
+    //console.log(fileDateTime);
     //debug date and time
     //var date = (fileDateTime.getFullYear()+'-'+(fileDateTime.toLocaleString('default', { month: 'short' })+'-'+fileDateTime.getDate());
     //var time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
@@ -496,8 +479,8 @@ function createMainMenu(e) {
 
  function exportLocalStorage(e){
     //Debug and log event messages from change click
-    console.log(e);
-    console.log(localStorageKeyName);
+    //console.log(e);
+    //console.log(localStorageKeyName);
     //get localstorage key and associated JSON strings
     var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
     //turn into a string
@@ -515,7 +498,7 @@ function createMainMenu(e) {
     //let date = (fileDateTime.getFullYear()+'-'+(fileDateTime.getMonth()+1)+'-'+fileDateTime.getDate());
     //let time = (fileDateTime.getHours() + ":" + fileDateTime.getMinutes() + ":" + fileDateTime.getSeconds());
     //debug - show date and time
-    console.log(fileDateTime);
+    //console.log(fileDateTime);
 
     //downloadLink.style.postion = "absolute";
     //download method and set name
@@ -548,7 +531,7 @@ function importLocalStorage(e){
 
     var fileInput = e.target.files;
     var testDateTime = fileInput.lastModifiedDate;
-    console.log("testDateTime:::",e.target.files[0].lastModified);
+    //console.log("testDateTime:::",e.target.files[0].lastModified);
 
     //button to choose file and load json file
     let fileChosen = document.getElementById("importLocalStorage");
@@ -558,7 +541,7 @@ function importLocalStorage(e){
     let reader = new FileReader();
     //console.log(fileChosen.files[0]);
     //console.log("filechosen",fileChosen.files[0].name);
-    console.log("filechosen",e.target.files[0].lastModified);
+    //console.log("filechosen",e.target.files[0].lastModified);
     var lastModifiedDateTimeFileString = e.target.files[0].lastModified;
     //debug and show date and time
     var lastModifiedDateTimeFileInteger = parseInt(lastModifiedDateTimeFileString);
@@ -580,10 +563,10 @@ function importLocalStorage(e){
             //Debug - base64 file
             //decode file from base64
             var mfJsonString = decodeURIComponent(atob(mfJsonStringBase64));
-            console.log(mfJsonString);
+            //console.log(mfJsonString);
             //create object to extract version
             var mfJsonObj = JSON.parse(mfJsonString);
-            console.log(mfJsonObj);
+            //console.log(mfJsonObj);
             //set the key name from original obj
             var mfHtmlTitle = mfJsonObj["mfHtmlTitle"];
             //Set and Save to Local Storage
@@ -601,7 +584,7 @@ function importLocalStorage(e){
         var result = mfJson["mfHtmlTitle"];
         document.getElementById("mfVersion").innerHTML = mfJson["mfVersion"];
     
-        console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
+        //console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
         
         //change backgroundColor
         //Change html body background to saved local storage value
@@ -622,8 +605,8 @@ function importLocalStorage(e){
         //create an array of keys (line items from local storage)
         var keysLocalStorageArray = Object.keys(mfJson);
         //DEBUG
-        console.log("kEYS#=",n);
-        console.log("ARRAY#=",keysLocalStorageArray);
+        //console.log("kEYS#=",n);
+        //console.log("ARRAY#=",keysLocalStorageArray);
         for (var i=0;i < n;i++){
             var tempString = keysLocalStorageArray[i];
       
@@ -632,7 +615,7 @@ function importLocalStorage(e){
           
                 //check if its a parent or chuild node of document.body
                     var tempNode = tempString.replace("div-","");
-                    console.log("changed to:::",tempNode);
+                    //console.log("changed to:::",tempNode);
                     var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
                     //Dont process DIVS with zero properties - actually a bug but will have to fix later
                     try{
@@ -664,9 +647,9 @@ function importLocalStorage(e){
                             var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
                             var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
                             var o = Object.keys(lineJsonTempObj).length;
-                            console.log("var o:::",o);
+                            //console.log("var o:::",o);
                             var keysLineTempArray = Object.keys(lineJsonTempObj);
-                            console.log("var keysLineTempArray:::",keysLineTempArray);
+                            //console.log("var keysLineTempArray:::",keysLineTempArray);
                             for (var j=0;j < o;j++){
                                 var tempDivString = keysLineTempArray[j];
                                 var nodeDivTempChild = document.createElement("DIV");
@@ -687,17 +670,17 @@ function importLocalStorage(e){
                             //setup the rest of the divs and nodes after parent above
                             //load all nodes
                             var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
-                            console.log("DEBUG CHILD:::",mfJsonTempObj);
+                            //console.log("DEBUG CHILD:::",mfJsonTempObj);
                             var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
-                            console.log("DEBUG CHILD:::",lineJsonTempObj);
+                            //console.log("DEBUG CHILD:::",lineJsonTempObj);
                             var p = Object.keys(lineJsonTempObj).length;
-                            console.log("var p:::",p);
+                            //console.log("var p:::",p);
                             var keysLineTempArray = Object.keys(lineJsonTempObj);
-                            console.log("var keysLineTempArray:::",keysLineTempArray);
+                            //console.log("var keysLineTempArray:::",keysLineTempArray);
                             for (var k=0;k < p;k++){
                                 //try {
                                 var tempDivString = keysLineTempArray[k];
-                                console.log("PARENT DIV ID:::",tempString);
+                                //console.log("PARENT DIV ID:::",tempString);
                                 //this parent div was created as above
                                 var divNameParent = document.getElementById(tempString);
                                 
@@ -796,10 +779,10 @@ function createForm(e) {
         form.appendChild(formNodeId);  
         
         //get node id text value
-        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::e.target.id.value:::",e.target.id);
+        //console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::e.target.id.value:::",e.target.id);
         var formNodeTextId = document.getElementById(e.target.id);
         var formNodeTextValue = formNodeTextId.value;
-        console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::formNodeTextValue:::",formNodeTextValue);
+        //console.log("DEBUG::::::::::::::::::::::::::::::::::::::::::::::::::::formNodeTextValue:::",formNodeTextValue);
       
         // Create an input element for password 
         var formNodeText = document.createElement("input");
@@ -1065,9 +1048,9 @@ function createForm(e) {
             localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
         });
 
-        //Get color and change it for the node and save in localstorage
-        var fontColorInput = document.getElementById(fontColorNodeId);
-        fontColorInput.addEventListener("change", () => {
+            //Get color and change it for the node and save in localstorage
+            var fontColorInput = document.getElementById(fontColorNodeId);
+            fontColorInput.addEventListener("change", () => {
             //load current node element and then change bg color
             var currentNode = document.getElementById(nodeSearch);
             currentNode.style.color = fontColorInput.value;
@@ -1138,24 +1121,24 @@ function hideUnhideChildNodes(nodeSearch){
             var n = Object.keys(tempNodeDivObj).length;
             var tempNodeDivObjArray = Object.keys(tempNodeDivObj);
             //DEBUG
-            console.log("kEYS#=",n);
-            console.log("ARRAY#=",tempNodeDivObjArray);
+            //console.log("kEYS#=",n);
+            //console.log("ARRAY#=",tempNodeDivObjArray);
             for (var i=0;i < n;i++){
                 console.log(tempNodeDivObjArray[i]);
                 var tempString = tempNodeDivObjArray[i];
                 var x = document.getElementById(tempString);
                 x.style.display = "none";
-                console.log(x);
+                //console.log(x);
 
                 //hide svg lines
                 var tempSvgLine = "line-"+tempString.replace("div-","");
-                console.log("changed to:::",tempSvgLine);
+                //console.log("changed to:::",tempSvgLine);
                 var y = document.getElementById(tempSvgLine);
                 y.style.display = "none";
 
                 //hide svg lines
                 var tempDivSvgLine = "div-line-"+tempString.replace("div-","");
-                console.log("changed to:::",tempDivSvgLine);
+                //console.log("changed to:::",tempDivSvgLine);
                 var z = document.getElementById(tempDivSvgLine);
                 z.style.display = "none";
 
@@ -1175,24 +1158,24 @@ function hideUnhideChildNodes(nodeSearch){
             var n = Object.keys(tempNodeDivObj).length;
             var tempNodeDivObjArray = Object.keys(tempNodeDivObj);
             //DEBUG
-            console.log("kEYS#=",n);
-            console.log("ARRAY#=",tempNodeDivObjArray);
+            //console.log("kEYS#=",n);
+            //console.log("ARRAY#=",tempNodeDivObjArray);
             for (var i=0;i < n;i++){
-                console.log(tempNodeDivObjArray[i]);
+                //console.log(tempNodeDivObjArray[i]);
                 var tempString = tempNodeDivObjArray[i];
                 var x = document.getElementById(tempString);
                 x.style.display = "unset";
-                console.log(x);
+                //console.log(x);
 
                 //hide svg lines
                 var tempSvgLine = "line-"+tempString.replace("div-","");
-                console.log("changed to:::",tempSvgLine);
+                //console.log("changed to:::",tempSvgLine);
                 var y = document.getElementById(tempSvgLine);
                 y.style.display = "unset";
 
                 //hide svg lines
                 var tempDivSvgLine = "div-line-"+tempString.replace("div-","");
-                console.log("changed to:::",tempDivSvgLine);
+                //console.log("changed to:::",tempDivSvgLine);
                 var z = document.getElementById(tempDivSvgLine);
                 z.style.display = "unset";
 
@@ -1227,21 +1210,21 @@ function deleteNode(nodeSearch){
             var tempDiv = "div-"+ nodeSearch;
               
             for (var key in mfJsonObj) {
-                console.log("KEY:::",key);
+                //console.log("KEY:::",key);
                 var value = mfJsonObj[key];
                 
-                console.log("VALUE:::",value);
+                //console.log("VALUE:::",value);
                 
                 if (key.startsWith("div-") === true){
                     
                     var valueObj = JSON.parse(value);
-                    console.log("VALUEOBJ:::",valueObj);
+                    //console.log("VALUEOBJ:::",valueObj);
                 
                     if (typeof valueObj === 'object') {
                         for (var subKey in valueObj) {
                             var subValue = valueObj[subKey];
                             if (subValue === tempDiv) {
-                                console.log('SUB Property=' + subKey + ' value=' + subValue);
+                                //console.log('SUB Property=' + subKey + ' value=' + subValue);
                                 delete valueObj[subKey];
                                 mfJsonObj[key] = JSON.stringify(valueObj);
                             }
@@ -1269,15 +1252,15 @@ function deleteNode(nodeSearch){
         //nodeDelete.remove();
         //SVG line
         var svgLineId = "line-"+nodeSearch;
-        console.log("svgLineId:::",svgLineId);
+        //console.log("svgLineId:::",svgLineId);
         var svgLine = document.getElementById(svgLineId);
-        console.log("svgLine:::",svgLine);
+        //console.log("svgLine:::",svgLine);
         
         svgLine.style.display = "none";
         //svgLine.remove();
 
 
-        console.log("Node and line Deleted:::",nodeSearch);
+        //console.log("Node and line Deleted:::",nodeSearch);
     }
     else{
         console.log("Node was not Deleted:::",nodeSearch);
@@ -1487,7 +1470,7 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,currentParentNodeId
         //DEBUG:::DIV
         var parentDivLineId = "div-line-"+currentParentNodeId;
         var parentDivTemp = document.createElementNS(xmlns,"g");
-        console.log("childDivNameId:::",parentDivLineId);
+        console.log("childDivNameId in drawLineSvg :::",parentDivLineId);
         parentDivTemp.setAttribute("id",parentDivLineId);
 
         //append to document
@@ -1498,14 +1481,14 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,currentParentNodeId
         //DEBUG:::DIV
         var parentDivLineId = "div-line-"+currentParentNodeId;
         var parentDivTemp = document.getElementById(parentDivLineId)
-        console.log("childDivNameId:::",parentDivLineId);
+        console.log("childDivNameId in drawLineSvg :::",parentDivLineId);
         parentDivTemp.setAttribute("id",parentDivLineId);
 
         
         //create child line DIV
         //DEBUG:::DIV
         var childDivTemp = document.createElementNS(xmlns,"g");
-        console.log("childDivNameId:::",childDivNameLine);
+        console.log("childDivNameId in drawLineSvg :::",childDivNameLine);
         childDivTemp.setAttribute("id",childDivNameLine);
         parentDivTemp.appendChild(childDivTemp);
 
@@ -1532,20 +1515,21 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,currentParentNodeId
 
 //draws a line from child to parent and stores it in local storage
 function updateLineSvg(xStart,yStart,xEnd,yEnd,childNodeNameLine){
+    console.log("DEBUG:::childNodeNameLine in updatelineSvg:::",childNodeNameLine);
 //catch cords emoty or undefined - DEBUG for now becuase cannot find the issue
 if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || yEnd !== 'undefined' || childNodeNameLine !== 'undefined'){
     //SVG canvas
     var xmlns = "http://www.w3.org/2000/svg";
     var svgElem = document.getElementById("svgDivId");
     //var svgElemStatus = document.getElementById("svgParent").contains(svg);
-    console.log("svgElem status:::",svgElem);
+    console.log("svgElem status in updateLineSvg :::",svgElem);
     //check if it exists
     if ((typeof(svgElem) === 'undefined') || (svgElem === null)){
         var svgElem = document.createElementNS(xmlns, "svg");
         var boxWidth = window.innerWidth - 100;
         var boxHeight = window.innerHeight - 100;
 
-        console.log("bogWidth/Height",boxWidth,":::",boxHeight);
+        console.log("boxWidth/Height",boxWidth,":::",boxHeight);
     
         svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
         svgElem.setAttributeNS(null, "width", boxWidth);
@@ -1559,6 +1543,7 @@ if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || 
     }
 
     var existingLine = document.getElementById(childNodeNameLine);
+    console.log("DEBUG:::existingLine and childNodeNameLine in updateLineSvg :::",existingLine," :::  ::: ::: ", childNodeNameLine);
     //var newLine = document.createElementNS(xmlns,'line');
         //existingLine.setAttribute('id',childNodeNameLine);
         existingLine.setAttribute('x1',xStart);
@@ -1628,8 +1613,117 @@ function loadLocalStorage(e){
     let lengthArrayLocalStorage = Object.keys(localStorage).length;
     console.log("# Keys = "+lengthArrayLocalStorage);
     let arrayStringLocalStorage =  Object.keys(localStorage)
-    var result = window.prompt("Existing Mindmaps in LocalStorage in Browser - Do you want to load one?",arrayStringLocalStorage);
-  
+
+    //debug adding a menu pop with drop down for correct mindfully mindmap
+    var br = document.createElement("br"); 
+        // Create a form synamically 
+        var form = document.createElement("form"); 
+        form.setAttribute("id", "formDivContainer"); 
+        
+        form.style.position = "absolute";
+        form.style.backgroundColor = "lightgrey";
+        form.style.borderStyle = "none";
+        form.style.width = 190 +"px";
+        //form.style.left = 200 +"px";
+        ///console.log(e);
+        // Create an input element for nodeid 
+        var formNodeId = document.createElement("input");
+        formNodeId.setAttribute("id", "formNodeId");  
+        formNodeId.setAttribute("type", "color"); 
+        
+        //formNodeId.style.position = "relative";
+        formNodeId.style.backgroundColor = "lightgrey";
+        //formNodeId.style.top = (e.clientY+20) +"px";
+        //formNodeId.style.left = (e.clientX+20) +"px";
+        
+        // create a submit button 
+        var s = document.createElement("input"); 
+        s.setAttribute("id", "submitClose"); 
+        s.setAttribute("type", "button"); 
+        s.setAttribute("value", "Close"); 
+        s.style.backgroundColor = "green";
+        // Append the submit button to the form 
+        form.appendChild(s); 
+        form.appendChild(br.cloneNode());  
+        form.appendChild(br.cloneNode());
+        
+        
+        
+        //background color select statement - simple version - no rgb
+        var selectBgColor = document.createElement('select');
+        selectBgColor.setAttribute("name","result");
+        selectBgColor.setAttribute("id","result");
+        
+        //background colour choice//
+		var bgColorOption = document.createElement('option');
+		bgColorOption.value = "Mindfully Mindmap";
+		bgColorOption.text = "Choose Mindfully Mindmap";
+		selectBgColor.appendChild(bgColorOption);
+        //Create color Choices
+        for (var i = 0; i < arrayStringLocalStorage.length; i++){
+	        var bgColorOption = document.createElement('option');
+		    bgColorOption.value = arrayStringLocalStorage[i];
+			bgColorOption.text = arrayStringLocalStorage[i];
+		    selectBgColor.appendChild(bgColorOption);
+		}
+
+        form.appendChild(br.cloneNode()); 
+         // Append to the form 
+         form.appendChild(selectBgColor);
+
+
+       
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
+        
+        //hide menu items so CTRL-S does not show them
+
+            //create label for gbcolorinput
+        var mfMenuHideLabel = document.createElement('label');
+        var mfMenuHideLabelText = document.createTextNode("Hide Menus");
+        mfMenuHideLabel.setAttribute("for","mfMenuHideId");
+        mfMenuHideLabel.setAttribute("id","label-mfMenuHideId");
+        form.appendChild(mfMenuHideLabel);
+        mfMenuHideLabel.appendChild(mfMenuHideLabelText);
+        //bac color select statement - simple version - no rgb
+        var mfMenuHide = document.createElement('input');
+        mfMenuHide.setAttribute("name","mfMenuHideId");
+        mfMenuHide.setAttribute("id","mfMenuHideId");
+        //lookedup from local storage
+        mfMenuHide.setAttribute("value","Hide Menus");
+        mfMenuHide.setAttribute("type","button");
+        mfMenuHide.setAttribute("class","buttonRightInput");
+        //mfBgColor.setAttribute("class","colorInput");
+        form.appendChild(mfMenuHide);
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
+    
+        //form.appendChild(selectBgColor);
+        form.appendChild(br.cloneNode()); 
+        document.getElementsByTagName("body")[0].appendChild(form); 
+        //document.getElementById("formDiv").appendChild("formDivContainer");
+        var f = document.getElementById("formDivContainer") 
+        f.style.postion = "relative";
+        f.style.left = 50+"%";
+        f.style.top = 50+"%";
+
+
+        //Get color and change it for the node and save in localstorage
+        document.getElementById("result").addEventListener("change", () => {
+            //load current node element and then change bg color
+            var bgColorDropDown = document.getElementById("result");
+            var result = bgColorDropDown.value;    
+        
+
+
+
+
+       
+        document.getElementById("submitClose").addEventListener("click", deleteForm);
+//=============================================================================================
+
+    //var result = window.prompt("Existing Mindmaps in LocalStorage in Browser - Do you want to load one?",arrayStringLocalStorage);
+    //var result = 'Poly Notes';
     localStorageKeyName = result;
     console.log("Key Name for existing"+localStorageKeyName);
   
@@ -1759,12 +1853,18 @@ function loadLocalStorage(e){
             }    
         }
     }    
+    deleteForm();
+
+    });
 }
+
+
+
 //load node and associated text
 function retrieveSavedNodeFromLocalStorage(tempParentNodeId,nodeID,result){
     //console.log("Node Name sent=",nodeID);
     localStorageKeyName = result;
-    console.log("tempParentNodeId: ",tempParentNodeId," nodeID:",nodeID," result:",result);
+    //console.log("tempParentNodeId: ",tempParentNodeId," nodeID:",nodeID," result:",result);
     //retrieve object based on nodename ID
     //elementMydiv = document.getElementById(nodeID);
     //get Mindmap stored data string and parse to JS Obj
@@ -1856,7 +1956,7 @@ function createNode(e){
    
     //save to local storage
     var nodeCoordsObj = x.getBoundingClientRect();
-    console.log(nodeCoordsObj);
+    //console.log(nodeCoordsObj);
     //console.log("New node CoOrds =",nodeCoOrds.top, nodeCoOrds.right, nodeCoOrds.bottom, nodeCoOrds.left,nodeCoOrds.x,nodeCoOrds.y,nodeCoOrds.height,nodeCoOrds.width);
 
     //Store each node as a subset of the localstorage and stringify all of it.
@@ -1980,7 +2080,7 @@ function createNodeText(e){
 function createMoveNode(e){
     //e.preventDefault();
     //e.target.id = the node being moved
-    console.log("node moving...................................................................-->",e.target.id);
+    //console.log("node moving...................................................................-->",e.target.id);
     
     ////////////////////////////////////////////////////////////////////////////
     //get upstream lineEndX and lineEndY - node that moves
@@ -2000,8 +2100,6 @@ function createMoveNode(e){
 
     var moveXY = document.getElementById(e.target.id);
     e.target.style.cursor = "pointer";
-
-    
             //DEBUG
             var startX = e.pageX;
             var startY = e.pageY;
@@ -2017,11 +2115,6 @@ function createMoveNode(e){
 
     console.log("DEBUG: DEVIATION from corner for X and Y is:", deviationX,deviationY);
     
-    
-    
-    
-
-
     //only required for debug to watch moving coords
     moveXY.addEventListener("drag", (e) => {
         //e.preventDefault();
@@ -2029,11 +2122,11 @@ function createMoveNode(e){
             console.log("gloablClientX:::",globalClientX);
             console.log("globalClientY:::",globalClientY);
         }
-        console.log(coordsMove);
+        //console.log(coordsMove);
         console.log("X client cords = ",e.clientX,"Y client cords = ",e.clientY);
-        console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
-        console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
-        console.log(e);
+        //console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
+        //console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
+        //console.log(e);
     
     });
     
@@ -2055,8 +2148,8 @@ function createMoveNode(e){
         console.log("moveXY:::",moveXY);
       
 
-        console.log("X/left corner of node",moveXY.style.left);
-        console.log("Y/top corner of node",moveXY.style.top);
+        //console.log("X/left corner of node",moveXY.style.left);
+        //console.log("Y/top corner of node",moveXY.style.top);
     
         //Store each node as a subset of the localstorage and stringify all of it.
         //load storage vars so can append
@@ -2180,23 +2273,13 @@ function createMoveNode(e){
             }
         }
     });
+
     //only perform save and edit coords if its a node
-    //if (tempStringNodeId.search("node") != -1){
     if (tempStringNodeId.startsWith("node") === true){  
         ///////////DEBUG///////////////////////////////
         moveXY.addEventListener("mouseup", (e) => {
             e.target.style.cursor = "pointer";
-            //console.log("X client cords = ",e.clientX,"Y client cords = ",e.clientY);
-            //console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
-            //console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
-            //console.log(e);
-    
-            //moveXY.style.left = (e.clientX - deviationX) + "px";
-            //moveXY.style.top = (e.clientY - deviationY) + "px";
-    
             console.log("moveXY:::",moveXY);
-      
-
             console.log("X/left corner of node",moveXY.style.left);
             console.log("Y/top corner of node",moveXY.style.top);
     
@@ -2207,16 +2290,6 @@ function createMoveNode(e){
             //work out line start coords from the parent coords
             let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
             let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
-            
-            //let lineEndX = lineEndXRaw.toFixed(0);
-            //console.log("lineEndXRaw:::",lineEndXRaw);
-            //console.log("lineEndX rounded:::",lineEndX);
-            
-            //let lineEndY = lineEndYRaw.toFixed(0);
-            //console.log("lineEndYRaw:::",lineEndYRaw);
-            //console.log("lineEndY rounded:::",lineEndY);
-            //console.log("lineEndX for Parent or startx of child",lineEndX);
-            //console.log("lineEndY for Parent or startY of child",lineEndY);
         
             //add the node coords 
             //initialise temp object
@@ -2336,7 +2409,3 @@ function createMoveNode(e){
 </script>    
 </body>
 </html>
-
-
-
-
