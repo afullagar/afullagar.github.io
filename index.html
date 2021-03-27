@@ -23,6 +23,7 @@
 - add TAB and Insert button actions for add ChildNode and also DEL button to delete a node. - v1.50
 - remove rounding of svg co-ords - causing issues - v1.51
 - add drop down menu for loading and choosing existing mindmaps stored in browser local storage - v1.52
+- adda button to generate flat file notes based on branches - v1.53
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -123,13 +124,13 @@ html, body {
 <input type="file" accept="text/json" id="importLocalStorage" style="display: none;"></input>
 <button type="button" class="defaultButton" id="checkDateTimeId">Check JSON File Date/Time</button>
 <button type="button" class="defaultButton" id="mainMenuId">Main Menu</button> 
-
+<button type="button" class="defaultButton" id="makeNotesId">Make Notes</button>
 
 <script>
 //Use Strict
 'use strict';
 //Mindfully App version - in case different versions get incompatible - store the version with the mindmap so we know what version may load it.
-var mfAppVersion = "1.52";
+var mfAppVersion = "1.53";
 var startX = 0;
 var startY = 0;
 var deviationX = 0;
@@ -193,7 +194,8 @@ else if (browserReport.search("chrome") != -1){
   
   //export a main menu click
   document.getElementById("mainMenuId").addEventListener("click", createMainMenu);
-  
+  //make notes
+  document.getElementById("makeNotesId").addEventListener("click", makeNotes);
   
   var localStorageKeyName; 
 
@@ -281,6 +283,301 @@ function checkFileDateTime(e){
 
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//load from localstorage
+function makeNotes(e){
+    //load from localstorage
+    //get how many keys stored = MF Mindmaps
+    let lengthArrayLocalStorage = Object.keys(localStorage).length;
+    console.log("# Keys = "+lengthArrayLocalStorage);
+    let arrayStringLocalStorage =  Object.keys(localStorage)
+
+    //debug adding a menu pop with drop down for correct mindfully mindmap
+    var br = document.createElement("br"); 
+        // Create a form synamically 
+        var form = document.createElement("form"); 
+        form.setAttribute("id", "formDivContainer"); 
+        
+        form.style.position = "absolute";
+        form.style.backgroundColor = "lightgrey";
+        form.style.borderStyle = "none";
+        form.style.width = 190 +"px";
+        //form.style.left = 200 +"px";
+        ///console.log(e);
+        // Create an input element for nodeid 
+        var formNodeId = document.createElement("input");
+        formNodeId.setAttribute("id", "formNodeId");  
+        formNodeId.setAttribute("type", "color"); 
+        
+        //formNodeId.style.position = "relative";
+        formNodeId.style.backgroundColor = "lightgrey";
+        //formNodeId.style.top = (e.clientY+20) +"px";
+        //formNodeId.style.left = (e.clientX+20) +"px";
+        
+        // create a submit button 
+        var s = document.createElement("input"); 
+        s.setAttribute("id", "submitClose"); 
+        s.setAttribute("type", "button"); 
+        s.setAttribute("value", "Close"); 
+        s.style.backgroundColor = "green";
+        // Append the submit button to the form 
+        form.appendChild(s); 
+        form.appendChild(br.cloneNode());  
+        form.appendChild(br.cloneNode());
+        
+        
+        
+        //background color select statement - simple version - no rgb
+        var selectBgColor = document.createElement('select');
+        selectBgColor.setAttribute("name","result");
+        selectBgColor.setAttribute("id","result");
+        
+        //background colour choice//
+		var bgColorOption = document.createElement('option');
+		bgColorOption.value = "Mindfully Mindmap";
+		bgColorOption.text = "Choose Mindfully Mindmap";
+		selectBgColor.appendChild(bgColorOption);
+        //Create color Choices
+        for (var i = 0; i < arrayStringLocalStorage.length; i++){
+	        var bgColorOption = document.createElement('option');
+		    bgColorOption.value = arrayStringLocalStorage[i];
+			bgColorOption.text = arrayStringLocalStorage[i];
+		    selectBgColor.appendChild(bgColorOption);
+		}
+
+        form.appendChild(br.cloneNode()); 
+         // Append to the form 
+         form.appendChild(selectBgColor);
+
+
+       
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
+        
+        //hide menu items so CTRL-S does not show them
+
+            //create label for gbcolorinput
+        var mfMenuHideLabel = document.createElement('label');
+        var mfMenuHideLabelText = document.createTextNode("Hide Menus");
+        mfMenuHideLabel.setAttribute("for","mfMenuHideId");
+        mfMenuHideLabel.setAttribute("id","label-mfMenuHideId");
+        form.appendChild(mfMenuHideLabel);
+        mfMenuHideLabel.appendChild(mfMenuHideLabelText);
+        //bac color select statement - simple version - no rgb
+        var mfMenuHide = document.createElement('input');
+        mfMenuHide.setAttribute("name","mfMenuHideId");
+        mfMenuHide.setAttribute("id","mfMenuHideId");
+        //lookedup from local storage
+        mfMenuHide.setAttribute("value","Hide Menus");
+        mfMenuHide.setAttribute("type","button");
+        mfMenuHide.setAttribute("class","buttonRightInput");
+        //mfBgColor.setAttribute("class","colorInput");
+        form.appendChild(mfMenuHide);
+        form.appendChild(br.cloneNode());
+        form.appendChild(br.cloneNode());
+    
+        //form.appendChild(selectBgColor);
+        form.appendChild(br.cloneNode()); 
+        document.getElementsByTagName("body")[0].appendChild(form); 
+        //document.getElementById("formDiv").appendChild("formDivContainer");
+        var f = document.getElementById("formDivContainer") 
+        f.style.postion = "relative";
+        f.style.left = 50+"%";
+        f.style.top = 50+"%";
+
+
+        //Get color and change it for the node and save in localstorage
+        document.getElementById("result").addEventListener("change", () => {
+            //load current node element and then change bg color
+            var bgColorDropDown = document.getElementById("result");
+            var result = bgColorDropDown.value;    
+        
+
+
+
+
+       
+        document.getElementById("submitClose").addEventListener("click", deleteForm);
+//=============================================================================================
+
+    //var result = window.prompt("Existing Mindmaps in LocalStorage in Browser - Do you want to load one?",arrayStringLocalStorage);
+    //var result = 'Poly Notes';
+    localStorageKeyName = result;
+    console.log("Key Name for existing"+localStorageKeyName);
+  
+    var x = document.getElementById("mfHtmlTitle");
+    var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+    //add date string to html title so when CTRL+ s is used to save its unique and has a timestamp of when it was loaded atleast.
+    let currentDateTimeString = Date.now();
+    x.innerHTML = mfJson["mfHtmlTitle"]+"-"+currentDateTimeString;
+    console.log(mfJson["mfHtmlTitle"]+"-"+currentDateTimeString);
+    document.getElementById("mfVersion").innerHTML = mfJson["mfVersion"];
+    
+    console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
+    
+    //Change html body background to saved local storage value
+    var mfBgColorBody = document.getElementById("mainPage");
+    mfBgColorBody.style.backgroundColor = mfJson["mfBgColor"];
+    
+    // set the element's new position:
+    //elementMydiv.style.top = mindfullyJson.mydivTop + "px";
+    
+    //elementMydiv.style.left = mindfullyJson.mydivLeft + "px";
+    //change version prompt if required
+    var versionResult = window.prompt("Version:?",mfJson["mfVersion"]);
+    mfJson["mfVersion"] = versionResult;
+    //store App version used to load mindamp
+    mfJson["mfAppVersion"] = mfAppVersion;
+
+    document.getElementById("mfVersion").innerHTML = versionResult;
+    localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+
+    //load all nodes
+    var n = Object.keys(mfJson).length;
+    var keysLocalStorageArray = Object.keys(mfJson);
+    //DEBUG
+    console.log("kEYS#=",n);
+    console.log("ARRAY#=",keysLocalStorageArray);
+    for (var i=0;i < n;i++){
+
+        var tempString = keysLocalStorageArray[i];
+      
+        if (tempString.startsWith("div") === true){
+          //DEBUG:::DIV
+            try{
+                //check if its a parent or child node of document.body
+                var tempNode = tempString.replace("div-","");
+                console.log("changed to:::",tempNode);
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
+                console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
+            }
+            catch {console.log("Something went wrong or div was empty");}
+
+            //Setup the first div and associated child divs and nodes
+            if (lineJsonTempObj["nodeType"] == "parent"){
+                console.log("This node is a Parent not a child!");
+                //create DIV
+                
+                var nodeDivTemp = document.createElement("DIV");
+                var divNameId = tempString;
+                nodeDivTemp.setAttribute("id",divNameId);
+                //append to document
+                document.body.appendChild(nodeDivTemp);
+                retrieveSavedNodeFromLocalStorageForNotes("",tempNode,result)
+                var tempNodeSet = document.getElementById(tempNode);
+                nodeDivTemp.appendChild(tempNodeSet);
+                //Load the child div names and create relative to parent
+                //load all nodes
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
+                var o = Object.keys(lineJsonTempObj).length;
+                console.log("var o:::",o);
+                var keysLineTempArray = Object.keys(lineJsonTempObj);
+                console.log("var keysLineTempArray:::",keysLineTempArray);
+                for (var j=0;j < o;j++){
+                    var tempDivString = keysLineTempArray[j];
+                    
+                    var nodeDivTempChild = document.createElement("DIV");
+                    var divNameId = tempDivString;
+                    
+                    nodeDivTempChild.setAttribute("id",divNameId);
+                    //append to document
+                    nodeDivTemp.appendChild(nodeDivTempChild);
+
+                    //get the child node
+                    var tempChildNode = divNameId.replace("div-","");
+                    retrieveSavedNodeFromLocalStorageForNotes(tempNode,tempChildNode,result)
+                    var tempNodeChildSet = document.getElementById(tempChildNode);
+                    nodeDivTempChild.appendChild(tempNodeChildSet);
+
+                }
+            }
+            else {
+                //setup the rest of the divs and nodes after parent above
+                //load all nodes
+                var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
+                console.log("DEBUG CHILD:::",mfJsonTempObj);
+                var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
+                console.log("DEBUG CHILD:::",lineJsonTempObj);
+                var p = Object.keys(lineJsonTempObj).length;
+                console.log("var p:::",p);
+                var keysLineTempArray = Object.keys(lineJsonTempObj);
+                console.log("var keysLineTempArray:::",keysLineTempArray);
+                for (var k=0;k < p;k++){
+                    try {
+                        var tempDivString = keysLineTempArray[k];
+                        console.log("PARENT DIV ID:::",tempString);
+                        //this parent div was created as above
+                        var divNameParent = document.getElementById(tempString);
+                        
+                        var nodeDivTempChild = document.createElement("DIV");
+                        var divNameChildId = tempDivString;
+                        
+                        nodeDivTempChild.setAttribute("id",divNameChildId);
+                        //append to document
+                        divNameParent.appendChild(nodeDivTempChild);
+
+                        //get the child node
+                        var tempChildNodeId= divNameChildId.replace("div-","");
+                        //get parent 
+                        var tempParentNodeId = tempString.replace("div-","");
+                        retrieveSavedNodeFromLocalStorageForNotes(tempParentNodeId,tempChildNodeId,result)
+                        var tempNodeChildSet = document.getElementById(tempChildNodeId);
+                        nodeDivTempChild.appendChild(tempNodeChildSet);
+                    }
+                    catch {console.log("Something went wrong");}    
+                }
+            }    
+        }
+    }    
+    deleteForm();
+
+    });
+}
+
+
+
+//load node and associated text
+function retrieveSavedNodeFromLocalStorageForNotes(tempParentNodeId,nodeID,result){
+    //console.log("Node Name sent=",nodeID);
+    localStorageKeyName = result;
+    //console.log("tempParentNodeId: ",tempParentNodeId," nodeID:",nodeID," result:",result);
+    //retrieve object based on nodename ID
+    //elementMydiv = document.getElementById(nodeID);
+    //get Mindmap stored data string and parse to JS Obj
+    var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+    //get sub string data based on a element - name of node - parse to JS Obj
+    var nodeNameObj = JSON.parse(mfJson[nodeID]);
+    //console.log(nodeNameObj["coOrds"]);
+
+    //var x = document.createElement("INPUT");
+    var x = document.createElement("P");
+    
+
+    x.setAttribute("type", "text");
+    x.setAttribute("id",nodeID);
+    x.setAttribute("class","defaultNode");
+    x.style.position = "relative";
+    x.style.fontSize = nodeNameObj["fontSizeNode"]+"px";
+    x.style.backgroundColor = nodeNameObj["bgNodeColor"];
+    x.style.color = nodeNameObj["fontNodeColor"];
+
+    var nodeBorderColor = nodeNameObj["borderNodeColor"];
+    x.style.borderColor = nodeBorderColor;
+    
+    //x.setAttribute("draggable","true");
+    x.value = nodeNameObj["nodeText"];
+    //add text as well to TEXTAREA node in between brackets 
+    x.textContent = nodeNameObj["nodeText"];
+    //add the value attribute for offline file saving as well
+    x.setAttribute("value",nodeNameObj["nodeText"]); 
+    //append to document
+    document.body.appendChild(x);
+    var br = document.createElement("br"); 
+    document.body.appendChild(br);
+}    
 
 //createMainenu
 //pop up right click menu form
