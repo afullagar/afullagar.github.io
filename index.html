@@ -23,7 +23,8 @@
 - add TAB and Insert button actions for add ChildNode and also DEL button to delete a node. - v1.50
 - remove rounding of svg co-ords - causing issues - v1.51
 - add drop down menu for loading and choosing existing mindmaps stored in browser local storage - v1.52
-- adda button to generate flat file notes based on branches - v1.53
+- add button to generate flat file notes based on branches - v1.53
+- optimise and cleanup  - v1.54
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -37,30 +38,31 @@ html, body {
     height: 100%;
     margin: 0px;
     /*position:absolute;*/
-    background-color: rgb(240, 240, 240);
+    /*background-color: rgb(240, 240, 240);*/
+    background-color:#fff;
     overscroll-behavior: none;
     }
 
 .defaultButton {
     border-radius: 10px;
-    padding: 5px; 
+    padding: 3px; 
     color:inherit; 
-    font-size: 100%;
+    font-size: 80%;
     background-color: rgb(241, 239, 239);
     border: 1px solid black;
-    margin: 5px;
-    font-weight: 600;
+    margin: 3px;
+    font-weight: 100;
     }
 
 .downloadButton {
     border-radius: 10px;
-    padding: 5px; 
+    padding: 3px; 
     color:inherit;
-    font-size: 103%;
+    font-size: 80%;
     background-color: rgb(241, 239, 239);
     border: 1px solid black;
     margin: 1px;
-    font-weight: 800;
+    font-weight: 100;
     }
 
 .defaultNode {
@@ -290,7 +292,6 @@ function makeNotes(e){
     //load from localstorage
     //get how many keys stored = MF Mindmaps
     let lengthArrayLocalStorage = Object.keys(localStorage).length;
-    console.log("# Keys = "+lengthArrayLocalStorage);
     let arrayStringLocalStorage =  Object.keys(localStorage)
 
     //debug adding a menu pop with drop down for correct mindfully mindmap
@@ -302,7 +303,7 @@ function makeNotes(e){
         form.style.position = "absolute";
         form.style.backgroundColor = "lightgrey";
         form.style.borderStyle = "none";
-        form.style.width = 190 +"px";
+        form.style.width = 200 +"px";
         //form.style.left = 200 +"px";
         ///console.log(e);
         // Create an input element for nodeid 
@@ -329,51 +330,28 @@ function makeNotes(e){
         
         
         //background color select statement - simple version - no rgb
-        var selectBgColor = document.createElement('select');
-        selectBgColor.setAttribute("name","result");
-        selectBgColor.setAttribute("id","result");
+        var selectMindmap = document.createElement('select');
+        selectMindmap.setAttribute("name","result");
+        selectMindmap.setAttribute("id","result");
         
         //background colour choice//
-		var bgColorOption = document.createElement('option');
-		bgColorOption.value = "Mindfully Mindmap";
-		bgColorOption.text = "Choose Mindfully Mindmap";
-		selectBgColor.appendChild(bgColorOption);
+		var mindmapOption = document.createElement('option');
+		mindmapOption.value = "Mindfully Mindmap";
+		mindmapOption.text = "Choose Mindmap";
+		selectMindmap.appendChild(mindmapOption);
         //Create color Choices
         for (var i = 0; i < arrayStringLocalStorage.length; i++){
-	        var bgColorOption = document.createElement('option');
-		    bgColorOption.value = arrayStringLocalStorage[i];
-			bgColorOption.text = arrayStringLocalStorage[i];
-		    selectBgColor.appendChild(bgColorOption);
+	        var mindmapOption = document.createElement('option');
+		    mindmapOption.value = arrayStringLocalStorage[i];
+			mindmapOption.text = arrayStringLocalStorage[i];
+		    selectMindmap.appendChild(mindmapOption);
 		}
 
         form.appendChild(br.cloneNode()); 
          // Append to the form 
-         form.appendChild(selectBgColor);
-
-
-       
-        form.appendChild(br.cloneNode());
-        form.appendChild(br.cloneNode());
-        
+         form.appendChild(selectMindmap);
         //hide menu items so CTRL-S does not show them
 
-            //create label for gbcolorinput
-        var mfMenuHideLabel = document.createElement('label');
-        var mfMenuHideLabelText = document.createTextNode("Hide Menus");
-        mfMenuHideLabel.setAttribute("for","mfMenuHideId");
-        mfMenuHideLabel.setAttribute("id","label-mfMenuHideId");
-        form.appendChild(mfMenuHideLabel);
-        mfMenuHideLabel.appendChild(mfMenuHideLabelText);
-        //bac color select statement - simple version - no rgb
-        var mfMenuHide = document.createElement('input');
-        mfMenuHide.setAttribute("name","mfMenuHideId");
-        mfMenuHide.setAttribute("id","mfMenuHideId");
-        //lookedup from local storage
-        mfMenuHide.setAttribute("value","Hide Menus");
-        mfMenuHide.setAttribute("type","button");
-        mfMenuHide.setAttribute("class","buttonRightInput");
-        //mfBgColor.setAttribute("class","colorInput");
-        form.appendChild(mfMenuHide);
         form.appendChild(br.cloneNode());
         form.appendChild(br.cloneNode());
     
@@ -391,12 +369,7 @@ function makeNotes(e){
         document.getElementById("result").addEventListener("change", () => {
             //load current node element and then change bg color
             var bgColorDropDown = document.getElementById("result");
-            var result = bgColorDropDown.value;    
-        
-
-
-
-
+            var result = bgColorDropDown.value;
        
         document.getElementById("submitClose").addEventListener("click", deleteForm);
 //=============================================================================================
@@ -541,21 +514,13 @@ function makeNotes(e){
 
 //load node and associated text
 function retrieveSavedNodeFromLocalStorageForNotes(tempParentNodeId,nodeID,result){
-    //console.log("Node Name sent=",nodeID);
     localStorageKeyName = result;
-    //console.log("tempParentNodeId: ",tempParentNodeId," nodeID:",nodeID," result:",result);
-    //retrieve object based on nodename ID
-    //elementMydiv = document.getElementById(nodeID);
     //get Mindmap stored data string and parse to JS Obj
     var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
     //get sub string data based on a element - name of node - parse to JS Obj
     var nodeNameObj = JSON.parse(mfJson[nodeID]);
-    //console.log(nodeNameObj["coOrds"]);
-
     //var x = document.createElement("INPUT");
     var x = document.createElement("P");
-    
-
     x.setAttribute("type", "text");
     x.setAttribute("id",nodeID);
     x.setAttribute("class","defaultNode");
@@ -718,6 +683,9 @@ function createMainMenu(e) {
 
         var mainMenuHide = document.getElementById("mainMenuId");
         mainMenuHide.style.display = "none";
+
+        var makeNotesHide = document.getElementById("makeNotesId");
+        makeNotesHide.style.display = "none";
         
         //save file then show menu after timeout
         setTimeout(()=> {
@@ -747,8 +715,11 @@ function createMainMenu(e) {
 
         var mainMenuHide = document.getElementById("mainMenuId");
         mainMenuHide.style.display = "unset";
+
+        var makeNotesHide = document.getElementById("makeNotesId");
+        makeNotesHide.style.display = "unset";
         
-        }, 15000);
+        }, 20000);
 
         });
 
@@ -1920,7 +1891,7 @@ function loadLocalStorage(e){
         form.style.position = "absolute";
         form.style.backgroundColor = "lightgrey";
         form.style.borderStyle = "none";
-        form.style.width = 190 +"px";
+        form.style.width = 200 +"px";
         //form.style.left = 200 +"px";
         ///console.log(e);
         // Create an input element for nodeid 
@@ -1954,7 +1925,7 @@ function loadLocalStorage(e){
         //background colour choice//
 		var bgColorOption = document.createElement('option');
 		bgColorOption.value = "Mindfully Mindmap";
-		bgColorOption.text = "Choose Mindfully Mindmap";
+		bgColorOption.text = "Choose Mindmap";
 		selectBgColor.appendChild(bgColorOption);
         //Create color Choices
         for (var i = 0; i < arrayStringLocalStorage.length; i++){
@@ -1968,30 +1939,6 @@ function loadLocalStorage(e){
          // Append to the form 
          form.appendChild(selectBgColor);
 
-
-       
-        form.appendChild(br.cloneNode());
-        form.appendChild(br.cloneNode());
-        
-        //hide menu items so CTRL-S does not show them
-
-            //create label for gbcolorinput
-        var mfMenuHideLabel = document.createElement('label');
-        var mfMenuHideLabelText = document.createTextNode("Hide Menus");
-        mfMenuHideLabel.setAttribute("for","mfMenuHideId");
-        mfMenuHideLabel.setAttribute("id","label-mfMenuHideId");
-        form.appendChild(mfMenuHideLabel);
-        mfMenuHideLabel.appendChild(mfMenuHideLabelText);
-        //bac color select statement - simple version - no rgb
-        var mfMenuHide = document.createElement('input');
-        mfMenuHide.setAttribute("name","mfMenuHideId");
-        mfMenuHide.setAttribute("id","mfMenuHideId");
-        //lookedup from local storage
-        mfMenuHide.setAttribute("value","Hide Menus");
-        mfMenuHide.setAttribute("type","button");
-        mfMenuHide.setAttribute("class","buttonRightInput");
-        //mfBgColor.setAttribute("class","colorInput");
-        form.appendChild(mfMenuHide);
         form.appendChild(br.cloneNode());
         form.appendChild(br.cloneNode());
     
@@ -2004,17 +1951,11 @@ function loadLocalStorage(e){
         f.style.left = 50+"%";
         f.style.top = 50+"%";
 
-
         //Get color and change it for the node and save in localstorage
         document.getElementById("result").addEventListener("change", () => {
             //load current node element and then change bg color
             var bgColorDropDown = document.getElementById("result");
             var result = bgColorDropDown.value;    
-        
-
-
-
-
        
         document.getElementById("submitClose").addEventListener("click", deleteForm);
 //=============================================================================================
