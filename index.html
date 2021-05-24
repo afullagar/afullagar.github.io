@@ -25,6 +25,7 @@
 - add drop down menu for loading and choosing existing mindmaps stored in browser local storage - v1.52
 - add button to generate flat file notes based on branches - v1.53
 - optimise and cleanup  - v1.54
+- work on OOBounds when dragging - 19 May 2021 - v1.55
 -->
 <head>
     <meta Content-Type="text/html" charset="utf-8">
@@ -148,14 +149,25 @@ var versionControlBool = false;
 ////versionControlBool = confirm("Do you want realtime version control to a file?");
 
 var layoutViewPortX = document.documentElement.clientWidth;
-console.log("layout viewport X:::",layoutViewPortX);
+////console.log("layout viewport X:::",layoutViewPortX);
 var layoutViewPortY = document.documentElement.clientHeight;
-console.log("layout viewport Y:::",layoutViewPortY);
+////console.log("layout viewport Y:::",layoutViewPortY);
+
+// DEBUG /////////////////////////////////////////////////////////
+//const width  = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+//const height = window.innerHeight|| document.documentElement.clientHeight|| document.body.clientHeight;
+
+//console.log(width, height);
+
+////////////////////////////////////////////////////////////////
+
+
+
 
 //log browser type
-console.log(navigator.userAgent);
+////console.log(navigator.userAgent);
 var browserReport = navigator.userAgent.toLowerCase();
-//console.log(browserReport);
+//////console.log(browserReport);
 
 if (browserReport.search("firefox") != -1){
     console.log("Browser appears to be Firefox. ClientX/Y and PageX/Y is always zero so use global var!");
@@ -266,11 +278,11 @@ function touch2Mouse(e)
 
 function checkFileDateTime(e){
     var getDateTimeString = window.prompt("Enter date time string on te end of the filename", "String?");
-    console.log(getDateTimeString);
+    //console.log(getDateTimeString);
     var getDateTimeInteger = parseInt(getDateTimeString);
-    console.log(getDateTimeInteger);
+    //console.log(getDateTimeInteger);
     let currentDateTimeString = Date.now();
-    console.log("current date-time",currentDateTimeString);
+    //console.log("current date-time",currentDateTimeString);
     //debug and show date and time
     var fileDateTime = new Date(getDateTimeInteger);
     //console.log(fileDateTime);
@@ -377,17 +389,17 @@ function makeNotes(e){
     //var result = window.prompt("Existing Mindmaps in LocalStorage in Browser - Do you want to load one?",arrayStringLocalStorage);
     //var result = 'Poly Notes';
     localStorageKeyName = result;
-    console.log("Key Name for existing"+localStorageKeyName);
+    ////console.log("Key Name for existing"+localStorageKeyName);
   
     var x = document.getElementById("mfHtmlTitle");
     var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
     //add date string to html title so when CTRL+ s is used to save its unique and has a timestamp of when it was loaded atleast.
     let currentDateTimeString = Date.now();
     x.innerHTML = mfJson["mfHtmlTitle"]+"-"+currentDateTimeString;
-    console.log(mfJson["mfHtmlTitle"]+"-"+currentDateTimeString);
+    ////console.log(mfJson["mfHtmlTitle"]+"-"+currentDateTimeString);
     document.getElementById("mfVersion").innerHTML = mfJson["mfVersion"];
     
-    console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
+    ////console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
     
     //Change html body background to saved local storage value
     var mfBgColorBody = document.getElementById("mainPage");
@@ -410,8 +422,8 @@ function makeNotes(e){
     var n = Object.keys(mfJson).length;
     var keysLocalStorageArray = Object.keys(mfJson);
     //DEBUG
-    console.log("kEYS#=",n);
-    console.log("ARRAY#=",keysLocalStorageArray);
+    ////console.log("kEYS#=",n);
+    ////console.log("ARRAY#=",keysLocalStorageArray);
     for (var i=0;i < n;i++){
 
         var tempString = keysLocalStorageArray[i];
@@ -421,16 +433,16 @@ function makeNotes(e){
             try{
                 //check if its a parent or child node of document.body
                 var tempNode = tempString.replace("div-","");
-                console.log("changed to:::",tempNode);
+                ////console.log("changed to:::",tempNode);
                 var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
                 var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
-                console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
+                ////console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
             }
             catch {console.log("Something went wrong or div was empty");}
 
             //Setup the first div and associated child divs and nodes
             if (lineJsonTempObj["nodeType"] == "parent"){
-                console.log("This node is a Parent not a child!");
+                ////console.log("This node is a Parent not a child!");
                 //create DIV
                 
                 var nodeDivTemp = document.createElement("DIV");
@@ -446,9 +458,9 @@ function makeNotes(e){
                 var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
                 var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
                 var o = Object.keys(lineJsonTempObj).length;
-                console.log("var o:::",o);
+                ////console.log("var o:::",o);
                 var keysLineTempArray = Object.keys(lineJsonTempObj);
-                console.log("var keysLineTempArray:::",keysLineTempArray);
+                ////console.log("var keysLineTempArray:::",keysLineTempArray);
                 for (var j=0;j < o;j++){
                     var tempDivString = keysLineTempArray[j];
                     
@@ -471,17 +483,17 @@ function makeNotes(e){
                 //setup the rest of the divs and nodes after parent above
                 //load all nodes
                 var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
-                console.log("DEBUG CHILD:::",mfJsonTempObj);
+                ////console.log("DEBUG CHILD:::",mfJsonTempObj);
                 var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
-                console.log("DEBUG CHILD:::",lineJsonTempObj);
+                ////console.log("DEBUG CHILD:::",lineJsonTempObj);
                 var p = Object.keys(lineJsonTempObj).length;
-                console.log("var p:::",p);
+                ////console.log("var p:::",p);
                 var keysLineTempArray = Object.keys(lineJsonTempObj);
-                console.log("var keysLineTempArray:::",keysLineTempArray);
+                ////console.log("var keysLineTempArray:::",keysLineTempArray);
                 for (var k=0;k < p;k++){
                     try {
                         var tempDivString = keysLineTempArray[k];
-                        console.log("PARENT DIV ID:::",tempString);
+                        ////console.log("PARENT DIV ID:::",tempString);
                         //this parent div was created as above
                         var divNameParent = document.getElementById(tempString);
                         
@@ -888,17 +900,17 @@ function importLocalStorage(e){
                     //Dont process DIVS with zero properties - actually a bug but will have to fix later
                     try{
                         var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
-                        console.log("lineJsonTempObj:::",lineJsonTempObj);
+                        ////console.log("lineJsonTempObj:::",lineJsonTempObj);
                     }
                     catch {console.log("Node does not exist or deleted",tempNode);}
                     if (Object.keys(lineJsonTempObj).length != 0)
                     {
                 
-                        console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
+                        ////console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
                 
                         //Setup the first div and associated child divs and nodes
                         if (lineJsonTempObj["nodeType"] == "parent"){
-                            console.log("This node is a Parent not a child!");
+                            ////console.log("This node is a Parent not a child!");
                             //create DIV
                         
                             var nodeDivTemp = document.createElement("DIV");
@@ -1377,7 +1389,7 @@ function createForm(e) {
 } 
 
 function hideUnhideChildNodes(nodeSearch){
-    console.log("childHideUnhide:::",nodeSearch);
+    ////console.log("childHideUnhide:::",nodeSearch);
     var tempNodeParent = document.getElementById(nodeSearch);
     if (tempNodeParent.style.border == "unset") {
         tempNodeParent.style.border = "5px double blue";
@@ -1392,7 +1404,7 @@ function hideUnhideChildNodes(nodeSearch){
             //console.log("kEYS#=",n);
             //console.log("ARRAY#=",tempNodeDivObjArray);
             for (var i=0;i < n;i++){
-                console.log(tempNodeDivObjArray[i]);
+                ////console.log(tempNodeDivObjArray[i]);
                 var tempString = tempNodeDivObjArray[i];
                 var x = document.getElementById(tempString);
                 x.style.display = "none";
@@ -1537,10 +1549,10 @@ function deleteNode(nodeSearch){
 
 //create child nodes
 function createChildNode(e){
-    console.log("target id at begin of createChildNode",e.target.id);
+    ////console.log("target id at begin of createChildNode",e.target.id);
     //get info about existing parent node
     let currentParentNode = document.getElementById("formNodeId");
-    console.log("current parent node",currentParentNode);
+    ////console.log("current parent node",currentParentNode);
     //console.log("Current PID=",e.target.id);
     //parent node id
     try{
@@ -1549,12 +1561,12 @@ function createChildNode(e){
     catch{
         var currentParentNodeId = e.target.id;
     }
-    console.log("value ID:",currentParentNodeId);
+    ////console.log("value ID:",currentParentNodeId);
 
     //get coOrds
     let parentNode = document.getElementById(currentParentNodeId);
     let parentNodeCoords = parentNode.getBoundingClientRect();
-    console.log("DEBUG:::parentNodeCoords:::",parentNodeCoords);
+    ////console.log("DEBUG:::parentNodeCoords:::",parentNodeCoords);
     
     //work out line start coords from the parent coords
     let lineStartX = parentNodeCoords.left + (parentNodeCoords.width/2);
@@ -1585,7 +1597,7 @@ function createChildNode(e){
     //console.log("childDivNameId:::",childDivNameId);
     childDiv.setAttribute("id",childDivNameId);
     
-    console.log("childDiv:::",childDiv);
+    ////console.log("childDiv:::",childDiv);
 
     //append to document
     parentDiv.appendChild(childDiv);
@@ -1604,9 +1616,9 @@ function createChildNode(e){
     x.style.borderColor = nodeBorderColor;
     //change to int base 10 - decimal and then add 15
     x.style.top = (parseInt(lineStartY, 10)+75)+"px";
-    console.log("x.style.top:::",x.style.top);
+    ////console.log("x.style.top:::",x.style.top);
     x.style.left = (parseInt(lineStartX, 10)-75)+"px";
-    console.log("x.style.left:::",x.style.left);
+    ////console.log("x.style.left:::",x.style.left);
     x.setAttribute("draggable","true");
 
     //append to childDiv document
@@ -1686,16 +1698,16 @@ function createChildNode(e){
     tempChildNodeObj["borderNodeColor"] = nodeBorderColor;
     tempChildNodeObj["fontSizeNode"] = "10";
     
-    console.log("tempChildNodeObj",tempChildNodeObj);
+    ////console.log("tempChildNodeObj",tempChildNodeObj);
     //make a string out of the child object
     var tempChildNodeString = JSON.stringify(tempChildNodeObj);
 
-    console.log("tempChildNodeString",tempChildNodeString);
+    ////console.log("tempChildNodeString",tempChildNodeString);
 
     //save coords string into node name line
     mfJson[childNodeName] = tempChildNodeString;
     
-    console.log("mfJson[nodeName]",mfJson[childNodeName]);
+    ////console.log("mfJson[nodeName]",mfJson[childNodeName]);
     //store nodename key
     localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
 }
@@ -1738,7 +1750,7 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,currentParentNodeId
         //DEBUG:::DIV
         var parentDivLineId = "div-line-"+currentParentNodeId;
         var parentDivTemp = document.createElementNS(xmlns,"g");
-        console.log("childDivNameId in drawLineSvg :::",parentDivLineId);
+        ////console.log("childDivNameId in drawLineSvg :::",parentDivLineId);
         parentDivTemp.setAttribute("id",parentDivLineId);
 
         //append to document
@@ -1749,14 +1761,14 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,currentParentNodeId
         //DEBUG:::DIV
         var parentDivLineId = "div-line-"+currentParentNodeId;
         var parentDivTemp = document.getElementById(parentDivLineId)
-        console.log("childDivNameId in drawLineSvg :::",parentDivLineId);
+        ////console.log("childDivNameId in drawLineSvg :::",parentDivLineId);
         parentDivTemp.setAttribute("id",parentDivLineId);
 
         
         //create child line DIV
         //DEBUG:::DIV
         var childDivTemp = document.createElementNS(xmlns,"g");
-        console.log("childDivNameId in drawLineSvg :::",childDivNameLine);
+        ////console.log("childDivNameId in drawLineSvg :::",childDivNameLine);
         childDivTemp.setAttribute("id",childDivNameLine);
         parentDivTemp.appendChild(childDivTemp);
 
@@ -1783,21 +1795,21 @@ function drawLineSvg(xStart,yStart,xEnd,yEnd,nodeBorderColor,currentParentNodeId
 
 //draws a line from child to parent and stores it in local storage
 function updateLineSvg(xStart,yStart,xEnd,yEnd,childNodeNameLine){
-    console.log("DEBUG:::childNodeNameLine in updatelineSvg:::",childNodeNameLine);
+    ////console.log("DEBUG:::childNodeNameLine in updatelineSvg:::",childNodeNameLine);
 //catch cords emoty or undefined - DEBUG for now becuase cannot find the issue
 if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || yEnd !== 'undefined' || childNodeNameLine !== 'undefined'){
     //SVG canvas
     var xmlns = "http://www.w3.org/2000/svg";
     var svgElem = document.getElementById("svgDivId");
     //var svgElemStatus = document.getElementById("svgParent").contains(svg);
-    console.log("svgElem status in updateLineSvg :::",svgElem);
+    ////console.log("svgElem status in updateLineSvg :::",svgElem);
     //check if it exists
     if ((typeof(svgElem) === 'undefined') || (svgElem === null)){
         var svgElem = document.createElementNS(xmlns, "svg");
         var boxWidth = window.innerWidth - 100;
         var boxHeight = window.innerHeight - 100;
 
-        console.log("boxWidth/Height",boxWidth,":::",boxHeight);
+        ////console.log("boxWidth/Height",boxWidth,":::",boxHeight);
     
         svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
         svgElem.setAttributeNS(null, "width", boxWidth);
@@ -1811,7 +1823,7 @@ if (xStart !== 'undefined' || yStart !== 'undefined' || xEnd !== 'undefined' || 
     }
 
     var existingLine = document.getElementById(childNodeNameLine);
-    console.log("DEBUG:::existingLine and childNodeNameLine in updateLineSvg :::",existingLine," :::  ::: ::: ", childNodeNameLine);
+    ////console.log("DEBUG:::existingLine and childNodeNameLine in updateLineSvg :::",existingLine," :::  ::: ::: ", childNodeNameLine);
     //var newLine = document.createElementNS(xmlns,'line');
         //existingLine.setAttribute('id',childNodeNameLine);
         existingLine.setAttribute('x1',xStart);
@@ -1839,7 +1851,7 @@ function deleteForm(e) {
     }
 
     var x = document.getElementById("formDivContainer");
-    console.log("Form=",x);
+    ////console.log("Form=",x);
     x.remove();
 
 }
@@ -1858,7 +1870,7 @@ function deleteForm(e) {
     //add date string to html title so when CTRL+ s is used to save its unique and has a timestamp of when it was loaded atleast.
     let currentDateTimeString = Date.now();
     x.innerHTML = mfHtmlTitle+"-"+currentDateTimeString;
-    console.log(mfHtmlTitle+"-"+currentDateTimeString);
+    ////console.log(mfHtmlTitle+"-"+currentDateTimeString);
 
     //create version control
     var mfVersion = window.prompt("Version:?","1.0");
@@ -1879,7 +1891,7 @@ function deleteForm(e) {
 function loadLocalStorage(e){
     //get how many keys stored = MF Mindmaps
     let lengthArrayLocalStorage = Object.keys(localStorage).length;
-    console.log("# Keys = "+lengthArrayLocalStorage);
+    ////console.log("# Keys = "+lengthArrayLocalStorage);
     let arrayStringLocalStorage =  Object.keys(localStorage)
 
     //debug adding a menu pop with drop down for correct mindfully mindmap
@@ -1963,17 +1975,17 @@ function loadLocalStorage(e){
     //var result = window.prompt("Existing Mindmaps in LocalStorage in Browser - Do you want to load one?",arrayStringLocalStorage);
     //var result = 'Poly Notes';
     localStorageKeyName = result;
-    console.log("Key Name for existing"+localStorageKeyName);
+    ////console.log("Key Name for existing"+localStorageKeyName);
   
     var x = document.getElementById("mfHtmlTitle");
     var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
     //add date string to html title so when CTRL+ s is used to save its unique and has a timestamp of when it was loaded atleast.
     let currentDateTimeString = Date.now();
     x.innerHTML = mfJson["mfHtmlTitle"]+"-"+currentDateTimeString;
-    console.log(mfJson["mfHtmlTitle"]+"-"+currentDateTimeString);
+    ////console.log(mfJson["mfHtmlTitle"]+"-"+currentDateTimeString);
     document.getElementById("mfVersion").innerHTML = mfJson["mfVersion"];
     
-    console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
+    ////console.log("MF Version in localstorage = "+mfJson["mfVersion"]);
     
     //Change html body background to saved local storage value
     var mfBgColorBody = document.getElementById("mainPage");
@@ -1996,8 +2008,8 @@ function loadLocalStorage(e){
     var n = Object.keys(mfJson).length;
     var keysLocalStorageArray = Object.keys(mfJson);
     //DEBUG
-    console.log("kEYS#=",n);
-    console.log("ARRAY#=",keysLocalStorageArray);
+    ////console.log("kEYS#=",n);
+    ////console.log("ARRAY#=",keysLocalStorageArray);
     for (var i=0;i < n;i++){
 
         var tempString = keysLocalStorageArray[i];
@@ -2007,16 +2019,16 @@ function loadLocalStorage(e){
             try{
                 //check if its a parent or child node of document.body
                 var tempNode = tempString.replace("div-","");
-                console.log("changed to:::",tempNode);
+                ////console.log("changed to:::",tempNode);
                 var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
                 var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempNode]);
-                console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
+                ////console.log("is Node a Parent or Child:::",lineJsonTempObj["nodeType"]);
             }
             catch {console.log("Something went wrong or div was empty");}
 
             //Setup the first div and associated child divs and nodes
             if (lineJsonTempObj["nodeType"] == "parent"){
-                console.log("This node is a Parent not a child!");
+                ////console.log("This node is a Parent not a child!");
                 //create DIV
                 
                 var nodeDivTemp = document.createElement("DIV");
@@ -2032,9 +2044,9 @@ function loadLocalStorage(e){
                 var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
                 var lineJsonTempObj = JSON.parse(mfJsonTempObj[divNameId]);
                 var o = Object.keys(lineJsonTempObj).length;
-                console.log("var o:::",o);
+                ////console.log("var o:::",o);
                 var keysLineTempArray = Object.keys(lineJsonTempObj);
-                console.log("var keysLineTempArray:::",keysLineTempArray);
+                ////console.log("var keysLineTempArray:::",keysLineTempArray);
                 for (var j=0;j < o;j++){
                     var tempDivString = keysLineTempArray[j];
                     
@@ -2057,17 +2069,17 @@ function loadLocalStorage(e){
                 //setup the rest of the divs and nodes after parent above
                 //load all nodes
                 var mfJsonTempObj = JSON.parse(localStorage.getItem(localStorageKeyName));
-                console.log("DEBUG CHILD:::",mfJsonTempObj);
+                ////console.log("DEBUG CHILD:::",mfJsonTempObj);
                 var lineJsonTempObj = JSON.parse(mfJsonTempObj[tempString]);
-                console.log("DEBUG CHILD:::",lineJsonTempObj);
+                ////console.log("DEBUG CHILD:::",lineJsonTempObj);
                 var p = Object.keys(lineJsonTempObj).length;
-                console.log("var p:::",p);
+                ////console.log("var p:::",p);
                 var keysLineTempArray = Object.keys(lineJsonTempObj);
-                console.log("var keysLineTempArray:::",keysLineTempArray);
+                ////console.log("var keysLineTempArray:::",keysLineTempArray);
                 for (var k=0;k < p;k++){
                     try {
                         var tempDivString = keysLineTempArray[k];
-                        console.log("PARENT DIV ID:::",tempString);
+                        ////console.log("PARENT DIV ID:::",tempString);
                         //this parent div was created as above
                         var divNameParent = document.getElementById(tempString);
                         
@@ -2341,7 +2353,7 @@ function createMoveNode(e){
             //DEBUG
             var startX = e.pageX;
             var startY = e.pageY;
-            console.log("Click Event startX and StartY:",startX,startY);
+            ////console.log("Click Event startX and StartY:",startX,startY);
 
 
     var coordsMove = moveXY.getBoundingClientRect();
@@ -2351,175 +2363,46 @@ function createMoveNode(e){
     let deviationX = startX - coordsMove.left;
     let deviationY = startY - coordsMove.top;
 
-    console.log("DEBUG: DEVIATION from corner for X and Y is:", deviationX,deviationY);
+    ////console.log("DEBUG: DEVIATION from corner for X and Y is:", deviationX,deviationY);
     
     //only required for debug to watch moving coords
-    moveXY.addEventListener("drag", (e) => {
-        //e.preventDefault();
-        if (browserReport.search("firefox") != -1){
-            console.log("gloablClientX:::",globalClientX);
-            console.log("globalClientY:::",globalClientY);
-        }
+    //moveXY.addEventListener("drag", (e) => {
+    //    //e.preventDefault();
+    //    if (browserReport.search("firefox") != -1){
+    //        console.log("gloablClientX:::",globalClientX);
+    //        console.log("globalClientY:::",globalClientY);
+    //    }
         //console.log(coordsMove);
-        console.log("X client cords = ",e.clientX,"Y client cords = ",e.clientY);
-        //console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
-        //console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
-        //console.log(e);
-    
-    });
-    
-    moveXY.addEventListener("dragend", (e) => {
-        e.preventDefault();
-        e.target.style.cursor = "pointer";
         //console.log("X client cords = ",e.clientX,"Y client cords = ",e.clientY);
         //console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
         //console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
         //console.log(e);
-        if (browserReport.search("firefox") != -1){
-            moveXY.style.left = (globalClientX - deviationX) + "px";
-            moveXY.style.top = (globalClientY - deviationY) + "px";
-        }
-        else {
-            moveXY.style.left = (e.clientX - deviationX) + "px";
-            moveXY.style.top = (e.clientY - deviationY) + "px";
-        }
-        console.log("moveXY:::",moveXY);
+    
+    //});
+    
+    moveXY.addEventListener("dragend", (e) => {
+        e.preventDefault();
+        e.target.style.cursor = "pointer";
+        ////console.log("X client cords = ",e.clientX,"Y client cords = ",e.clientY);
+        ////console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
+        ////console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
+        //check if y coords have gone off top of page
+        if (e.clientY > 0)
+        { 
+            //console.log(e);
+            if (browserReport.search("firefox") != -1){
+                moveXY.style.left = (globalClientX - deviationX) + "px";
+                moveXY.style.top = (globalClientY - deviationY) + "px";
+            }
+            else {
+                moveXY.style.left = (e.clientX - deviationX) + "px";
+                moveXY.style.top = (e.clientY - deviationY) + "px";
+            }
+            ////console.log("moveXY:::",moveXY);
       
 
-        //console.log("X/left corner of node",moveXY.style.left);
-        //console.log("Y/top corner of node",moveXY.style.top);
-    
-        //Store each node as a subset of the localstorage and stringify all of it.
-        //load storage vars so can append
-        //save to local storage
-        var nodeCoordsObj = moveXY.getBoundingClientRect();
-        //work out line start coords from the parent coords
-        let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
-        let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
-        
-        //let lineEndX = lineEndXRaw.toFixed(0);
-        //console.log("lineEndXRaw:::",lineEndXRaw);
-        //console.log("lineEndX rounded:::",lineEndX);
-    
-        //let lineEndY = lineEndYRaw.toFixed(0);
-        //console.log("lineEndYRaw:::",lineEndYRaw);
-        //console.log("lineEndY rounded:::",lineEndY);
-    
-
-        
-        //console.log("lineEndX for Parent or startx of child",lineEndX);
-        //console.log("lineEndY for Parent or startY of child",lineEndY);
-        
-        //add the node coords 
-            //initialise temp object
-            var tempNodeObj = {};
-            tempNodeObj["x"] = nodeCoordsObj.x;
-            tempNodeObj["y"] = nodeCoordsObj.y;
-            tempNodeObj["left"] = nodeCoordsObj.left;
-            tempNodeObj["top"] = nodeCoordsObj.top;
-            tempNodeObj["width"] = nodeCoordsObj.width;
-            tempNodeObj["height"] = nodeCoordsObj.height;
-            tempNodeObj["right"] = nodeCoordsObj.right;
-            tempNodeObj["bottom"] = nodeCoordsObj.bottom;
-            
-        //get localstorage
-        var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-       
-        //getnodeName key and make an object from the string
-        var nodeNameObj = JSON.parse(mfJson[e.target.id]);
-        //console.log("nodeNameObj after loading from local storage before object move:::",nodeNameObj);
-        var input = nodeNameObj["nodeText"];
-         
-        //load back new cooords and data
-        tempNodeObj["nodeText"] = input;
-        //add back into the object the node type - parent/child
-        tempNodeObj["nodeType"] = nodeNameObj["nodeType"];
-        //load color
-        tempNodeObj["bgNodeColor"] = nodeNameObj["bgNodeColor"];
-        tempNodeObj["fontNodeColor"] = nodeNameObj["fontNodeColor"];
-        tempNodeObj["borderNodeColor"] = nodeNameObj["borderNodeColor"];
-        tempNodeObj["fontSizeNode"] = nodeNameObj["fontSizeNode"];
-        //parent coords dont change
-        tempNodeObj["lineEndX"] = lineEndX;
-        tempNodeObj["lineEndY"] = lineEndY;
-        
-        if (nodeNameObj["nodeType"] == "child"){
-        
-                tempNodeObj["lineStartX"] = nodeNameObj["lineStartX"];
-                tempNodeObj["lineStartY"] = nodeNameObj["lineStartY"];
-        
-            //line name to be updated 
-            var childNodeNameLine = "line-"+ e.target.id;
-        
-            //redraw line with new coordinates
-            updateLineSvg(nodeNameObj["lineStartX"],nodeNameObj["lineStartY"],lineEndX,lineEndY,childNodeNameLine);
-            //debug
-            //console.log("tempNodeObj after running updateLineSVG:::",tempNodeObj);
-            
-        }
-        var tempNodeString = JSON.stringify(tempNodeObj);
-        mfJson[e.target.id] = tempNodeString;
-        
-        //console.log("mfJson[e.target.id]",mfJson[e.target.id]);
-        //store nodename key
-        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-
-        //////////////////////////////////////////////////////////////////
-        //Update all child nodes attached to the upstream parent so they are not orphaned
-        //load all nodes
-        var n = Object.keys(mfJson).length;
-        var keysLocalStorageArray = Object.keys(mfJson);
-        //DEBUG
-        //console.log("kEYS#=",n);
-        //console.log("ARRAY#=",keysLocalStorageArray);
-        for (var i=0;i < n;i++){
-
-        let tempString = keysLocalStorageArray[i];
-        
-        //iterate over and only update nodes
-            //if (tempString.search("node") != -1){
-            if (tempString.startsWith("node") === true){
-                //console.log("Node:",tempString);
-                //get localstorage
-                //var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-                //getnodeName key and make an object from the string
-                var tempNodeNameObj = JSON.parse(mfJson[tempString]);
-                //console.log('tempNodeNameObj[lineStartX]',tempNodeNameObj["lineStartX"]);
-                //console.log('nodeNameObj[lineEndX]',nodeNameObj["lineEndX"]);
-                
-                if (((tempNodeNameObj["lineStartX"] == tempLineEndX) || ((tempNodeNameObj["lineStartX"] >= (tempLineEndX-10)) && (tempNodeNameObj["lineStartX"] <= (tempLineEndX+10)))) && ((tempNodeNameObj["lineStartY"] == tempLineEndY) || ((tempNodeNameObj["lineStartY"] >= (tempLineEndY-10)) && (tempNodeNameObj["lineStartY"] <= (tempLineEndY+10))))) {
-                 //console.log("This node Qualifies:::",tempNodeNameObj);
-                    
-                    //double check node line corrods being stored
-                    var mfJsonTemp = JSON.parse(localStorage.getItem(localStorageKeyName));
-                    //getnodeName key and make an object from the string
-                    var nodeMovingTemp = JSON.parse(mfJsonTemp[e.target.id]);
-                    //update lineStartX and LineStartY
-                    tempNodeNameObj["lineStartX"] = nodeMovingTemp["lineEndX"];
-                    tempNodeNameObj["lineStartY"] = nodeMovingTemp["lineEndY"];
-                    
-                    //store nodename key
-                    var tempNodeNameString = JSON.stringify(tempNodeNameObj);
-                    mfJson[tempString] = tempNodeNameString;
-                    localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-                    //line name to be updated 
-                    var childNodeNameLine = "line-"+ tempString;
-        
-                    //redraw line with new coordinates - (currentParentNodeId,childNodeNameLine,childDivNameLine)
-                    updateLineSvg(tempNodeNameObj["lineStartX"],tempNodeNameObj["lineStartY"],tempNodeNameObj["lineEndX"],tempNodeNameObj["lineEndY"],childNodeNameLine);
-                }
-            }
-        }
-    });
-
-    //only perform save and edit coords if its a node
-    if (tempStringNodeId.startsWith("node") === true){  
-        ///////////DEBUG///////////////////////////////
-        moveXY.addEventListener("mouseup", (e) => {
-            e.target.style.cursor = "pointer";
-            console.log("moveXY:::",moveXY);
-            console.log("X/left corner of node",moveXY.style.left);
-            console.log("Y/top corner of node",moveXY.style.top);
+            //console.log("X/left corner of node",moveXY.style.left);
+            //console.log("Y/top corner of node",moveXY.style.top);
     
             //Store each node as a subset of the localstorage and stringify all of it.
             //load storage vars so can append
@@ -2529,26 +2412,39 @@ function createMoveNode(e){
             let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
             let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
         
-            //add the node coords 
-            //initialise temp object
-            var tempNodeObj = {};
-            tempNodeObj["x"] = nodeCoordsObj.x;
-            tempNodeObj["y"] = nodeCoordsObj.y;
-            tempNodeObj["left"] = nodeCoordsObj.left;
-            tempNodeObj["top"] = nodeCoordsObj.top;
-            tempNodeObj["width"] = nodeCoordsObj.width;
-            tempNodeObj["height"] = nodeCoordsObj.height;
-            tempNodeObj["right"] = nodeCoordsObj.right;
-            tempNodeObj["bottom"] = nodeCoordsObj.bottom;
+            //let lineEndX = lineEndXRaw.toFixed(0);
+            //console.log("lineEndXRaw:::",lineEndXRaw);
+            //console.log("lineEndX rounded:::",lineEndX);
+        
+            //let lineEndY = lineEndYRaw.toFixed(0);
+            //console.log("lineEndYRaw:::",lineEndYRaw);
+            //console.log("lineEndY rounded:::",lineEndY);
+        
+
             
+            //console.log("lineEndX for Parent or startx of child",lineEndX);
+            //console.log("lineEndY for Parent or startY of child",lineEndY);
+            
+            //add the node coords 
+                //initialise temp object
+                var tempNodeObj = {};
+                tempNodeObj["x"] = nodeCoordsObj.x;
+                tempNodeObj["y"] = nodeCoordsObj.y;
+                tempNodeObj["left"] = nodeCoordsObj.left;
+                tempNodeObj["top"] = nodeCoordsObj.top;
+                tempNodeObj["width"] = nodeCoordsObj.width;
+                tempNodeObj["height"] = nodeCoordsObj.height;
+                tempNodeObj["right"] = nodeCoordsObj.right;
+                tempNodeObj["bottom"] = nodeCoordsObj.bottom;
+                
             //get localstorage
             var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-       
+        
             //getnodeName key and make an object from the string
             var nodeNameObj = JSON.parse(mfJson[e.target.id]);
             //console.log("nodeNameObj after loading from local storage before object move:::",nodeNameObj);
             var input = nodeNameObj["nodeText"];
-         
+            
             //load back new cooords and data
             tempNodeObj["nodeText"] = input;
             //add back into the object the node type - parent/child
@@ -2558,75 +2454,203 @@ function createMoveNode(e){
             tempNodeObj["fontNodeColor"] = nodeNameObj["fontNodeColor"];
             tempNodeObj["borderNodeColor"] = nodeNameObj["borderNodeColor"];
             tempNodeObj["fontSizeNode"] = nodeNameObj["fontSizeNode"];
-
             //parent coords dont change
             tempNodeObj["lineEndX"] = lineEndX;
             tempNodeObj["lineEndY"] = lineEndY;
-        
+            
             if (nodeNameObj["nodeType"] == "child"){
-        
-                tempNodeObj["lineStartX"] = nodeNameObj["lineStartX"];
-                tempNodeObj["lineStartY"] = nodeNameObj["lineStartY"];
-        
+            
+                    tempNodeObj["lineStartX"] = nodeNameObj["lineStartX"];
+                    tempNodeObj["lineStartY"] = nodeNameObj["lineStartY"];
+            
                 //line name to be updated 
                 var childNodeNameLine = "line-"+ e.target.id;
-        
+            
                 //redraw line with new coordinates
                 updateLineSvg(nodeNameObj["lineStartX"],nodeNameObj["lineStartY"],lineEndX,lineEndY,childNodeNameLine);
                 //debug
                 //console.log("tempNodeObj after running updateLineSVG:::",tempNodeObj);
-            
-            }
-        var tempNodeString = JSON.stringify(tempNodeObj);
-        mfJson[e.target.id] = tempNodeString;
-        
-        //console.log("mfJson[e.target.id]",mfJson[e.target.id]);
-        //store nodename key
-        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-
-        //////////////////////////////////////////////////////////////////
-        //Update all child nodes attached to the upstream parent so they are not orphaned
-        //load all nodes
-        var n = Object.keys(mfJson).length;
-        var keysLocalStorageArray = Object.keys(mfJson);
-        //DEBUG
-        //console.log("kEYS#=",n);
-        //console.log("ARRAY#=",keysLocalStorageArray);
-        for (var i=0;i < n;i++){
-
-        let tempString = keysLocalStorageArray[i];
-        
-        //iterate over and only update nodes
-            //if (tempString.search("node") != -1){
-            if (tempString.startsWith("node") === true){  
-                //console.log("Node:",tempString);
-                //get localstorage
-                //var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
-                //getnodeName key and make an object from the string
-                var tempNodeNameObj = JSON.parse(mfJson[tempString]);
-                //console.log('tempNodeNameObj[lineStartX]',tempNodeNameObj["lineStartX"]);
-                //console.log('nodeNameObj[lineEndX]',nodeNameObj["lineEndX"]);
                 
-                if (((tempNodeNameObj["lineStartX"] == tempLineEndX) || ((tempNodeNameObj["lineStartX"] >= (tempLineEndX-10)) && (tempNodeNameObj["lineStartX"] <= (tempLineEndX+10)))) && ((tempNodeNameObj["lineStartY"] == tempLineEndY) || ((tempNodeNameObj["lineStartY"] >= (tempLineEndY-10)) && (tempNodeNameObj["lineStartY"] <= (tempLineEndY+10))))) {
-                 //console.log("This node Qualifies:::",tempNodeNameObj);
-                    
-                    //double check node line corrods being stored
-                    var mfJsonTemp = JSON.parse(localStorage.getItem(localStorageKeyName));
+            }
+            var tempNodeString = JSON.stringify(tempNodeObj);
+            mfJson[e.target.id] = tempNodeString;
+            
+            //console.log("mfJson[e.target.id]",mfJson[e.target.id]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+
+            //////////////////////////////////////////////////////////////////
+            //Update all child nodes attached to the upstream parent so they are not orphaned
+            //load all nodes
+            var n = Object.keys(mfJson).length;
+            var keysLocalStorageArray = Object.keys(mfJson);
+            //DEBUG
+            //console.log("kEYS#=",n);
+            //console.log("ARRAY#=",keysLocalStorageArray);
+            for (var i=0;i < n;i++){
+
+            let tempString = keysLocalStorageArray[i];
+            
+            //iterate over and only update nodes
+                //if (tempString.search("node") != -1){
+                if (tempString.startsWith("node") === true){
+                    //console.log("Node:",tempString);
+                    //get localstorage
+                    //var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
                     //getnodeName key and make an object from the string
-                    var nodeMovingTemp = JSON.parse(mfJsonTemp[e.target.id]);
-                    //update lineStartX and LineStartY
-                    tempNodeNameObj["lineStartX"] = nodeMovingTemp["lineEndX"];
-                    tempNodeNameObj["lineStartY"] = nodeMovingTemp["lineEndY"];
+                    var tempNodeNameObj = JSON.parse(mfJson[tempString]);
+                    //console.log('tempNodeNameObj[lineStartX]',tempNodeNameObj["lineStartX"]);
+                    //console.log('nodeNameObj[lineEndX]',nodeNameObj["lineEndX"]);
                     
-                    //store nodename key
-                    var tempNodeNameString = JSON.stringify(tempNodeNameObj);
-                    mfJson[tempString] = tempNodeNameString;
-                    localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
-                    //line name to be updated 
-                    var childNodeNameLine = "line-"+ tempString;
+                    if (((tempNodeNameObj["lineStartX"] == tempLineEndX) || ((tempNodeNameObj["lineStartX"] >= (tempLineEndX-10)) && (tempNodeNameObj["lineStartX"] <= (tempLineEndX+10)))) && ((tempNodeNameObj["lineStartY"] == tempLineEndY) || ((tempNodeNameObj["lineStartY"] >= (tempLineEndY-10)) && (tempNodeNameObj["lineStartY"] <= (tempLineEndY+10))))) {
+                    //console.log("This node Qualifies:::",tempNodeNameObj);
+                        
+                        //double check node line corrods being stored
+                        var mfJsonTemp = JSON.parse(localStorage.getItem(localStorageKeyName));
+                        //getnodeName key and make an object from the string
+                        var nodeMovingTemp = JSON.parse(mfJsonTemp[e.target.id]);
+                        //update lineStartX and LineStartY
+                        tempNodeNameObj["lineStartX"] = nodeMovingTemp["lineEndX"];
+                        tempNodeNameObj["lineStartY"] = nodeMovingTemp["lineEndY"];
+                        
+                        //store nodename key
+                        var tempNodeNameString = JSON.stringify(tempNodeNameObj);
+                        mfJson[tempString] = tempNodeNameString;
+                        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+                        //line name to be updated 
+                        var childNodeNameLine = "line-"+ tempString;
+            
+                        //redraw line with new coordinates - (currentParentNodeId,childNodeNameLine,childDivNameLine)
+                        updateLineSvg(tempNodeNameObj["lineStartX"],tempNodeNameObj["lineStartY"],tempNodeNameObj["lineEndX"],tempNodeNameObj["lineEndY"],childNodeNameLine);
+                    }
+                }
+            }
+        }    
+    });
+
+    //only perform save and edit coords if its a node
+    if (tempStringNodeId.startsWith("node") === true){  
+        ///////////DEBUG///////////////////////////////
+        moveXY.addEventListener("mouseup", (e) => {
+            e.target.style.cursor = "pointer";
+            ////console.log("moveXY:::",moveXY);
+            ////console.log("X/left corner of node",moveXY.style.left);
+            ////console.log("Y/top corner of node",moveXY.style.top);
+    
+            //Store each node as a subset of the localstorage and stringify all of it.
+            //load storage vars so can append
+            //save to local storage
+            //check if y coords have gone off top of page
+            console.log("X client cords = ",e.clientX,"Y client cords = ",e.clientY);
+            console.log("X screen cords = ",e.screenX,"Y screen cords = ",e.screenY);
+            console.log("X offset cords = ",e.offsetX,"Y offset cords = ",e.offsetY);
         
+            if (e.clientY > 0)
+            {
+                var nodeCoordsObj = moveXY.getBoundingClientRect();
+                //work out line start coords from the parent coords
+                let lineEndX = nodeCoordsObj.left + (nodeCoordsObj.width/2);
+                let lineEndY = nodeCoordsObj.top + (nodeCoordsObj.height/2);
+            
+                //add the node coords 
+                //initialise temp object
+                var tempNodeObj = {};
+                tempNodeObj["x"] = nodeCoordsObj.x;
+                tempNodeObj["y"] = nodeCoordsObj.y;
+                tempNodeObj["left"] = nodeCoordsObj.left;
+                tempNodeObj["top"] = nodeCoordsObj.top;
+                tempNodeObj["width"] = nodeCoordsObj.width;
+                tempNodeObj["height"] = nodeCoordsObj.height;
+                tempNodeObj["right"] = nodeCoordsObj.right;
+                tempNodeObj["bottom"] = nodeCoordsObj.bottom;
+                
+                //get localstorage
+                var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+        
+                //getnodeName key and make an object from the string
+                var nodeNameObj = JSON.parse(mfJson[e.target.id]);
+                //console.log("nodeNameObj after loading from local storage before object move:::",nodeNameObj);
+                var input = nodeNameObj["nodeText"];
+            
+                //load back new cooords and data
+                tempNodeObj["nodeText"] = input;
+                //add back into the object the node type - parent/child
+                tempNodeObj["nodeType"] = nodeNameObj["nodeType"];
+                //load color
+                tempNodeObj["bgNodeColor"] = nodeNameObj["bgNodeColor"];
+                tempNodeObj["fontNodeColor"] = nodeNameObj["fontNodeColor"];
+                tempNodeObj["borderNodeColor"] = nodeNameObj["borderNodeColor"];
+                tempNodeObj["fontSizeNode"] = nodeNameObj["fontSizeNode"];
+
+                //parent coords dont change
+                tempNodeObj["lineEndX"] = lineEndX;
+                tempNodeObj["lineEndY"] = lineEndY;
+            
+                if (nodeNameObj["nodeType"] == "child"){
+            
+                    tempNodeObj["lineStartX"] = nodeNameObj["lineStartX"];
+                    tempNodeObj["lineStartY"] = nodeNameObj["lineStartY"];
+            
+                    //line name to be updated 
+                    var childNodeNameLine = "line-"+ e.target.id;
+            
                     //redraw line with new coordinates
-                    updateLineSvg(tempNodeNameObj["lineStartX"],tempNodeNameObj["lineStartY"],tempNodeNameObj["lineEndX"],tempNodeNameObj["lineEndY"],childNodeNameLine);
+                    updateLineSvg(nodeNameObj["lineStartX"],nodeNameObj["lineStartY"],lineEndX,lineEndY,childNodeNameLine);
+                    //debug
+                    //console.log("tempNodeObj after running updateLineSVG:::",tempNodeObj);
+                
+                }
+            var tempNodeString = JSON.stringify(tempNodeObj);
+            mfJson[e.target.id] = tempNodeString;
+            
+            //console.log("mfJson[e.target.id]",mfJson[e.target.id]);
+            //store nodename key
+            localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+
+            //////////////////////////////////////////////////////////////////
+            //Update all child nodes attached to the upstream parent so they are not orphaned
+            //load all nodes
+            var n = Object.keys(mfJson).length;
+            var keysLocalStorageArray = Object.keys(mfJson);
+            //DEBUG
+            //console.log("kEYS#=",n);
+            //console.log("ARRAY#=",keysLocalStorageArray);
+            for (var i=0;i < n;i++){
+
+            let tempString = keysLocalStorageArray[i];
+            
+            //iterate over and only update nodes
+                //if (tempString.search("node") != -1){
+                if (tempString.startsWith("node") === true){  
+                    //console.log("Node:",tempString);
+                    //get localstorage
+                    //var mfJson = JSON.parse(localStorage.getItem(localStorageKeyName));
+                    //getnodeName key and make an object from the string
+                    var tempNodeNameObj = JSON.parse(mfJson[tempString]);
+                    //console.log('tempNodeNameObj[lineStartX]',tempNodeNameObj["lineStartX"]);
+                    //console.log('nodeNameObj[lineEndX]',nodeNameObj["lineEndX"]);
+                    
+                    if (((tempNodeNameObj["lineStartX"] == tempLineEndX) || ((tempNodeNameObj["lineStartX"] >= (tempLineEndX-10)) && (tempNodeNameObj["lineStartX"] <= (tempLineEndX+10)))) && ((tempNodeNameObj["lineStartY"] == tempLineEndY) || ((tempNodeNameObj["lineStartY"] >= (tempLineEndY-10)) && (tempNodeNameObj["lineStartY"] <= (tempLineEndY+10))))) {
+                    //console.log("This node Qualifies:::",tempNodeNameObj);
+                        
+                        //double check node line corrods being stored
+                        var mfJsonTemp = JSON.parse(localStorage.getItem(localStorageKeyName));
+                        //getnodeName key and make an object from the string
+                        var nodeMovingTemp = JSON.parse(mfJsonTemp[e.target.id]);
+                        //update lineStartX and LineStartY
+                        tempNodeNameObj["lineStartX"] = nodeMovingTemp["lineEndX"];
+                        tempNodeNameObj["lineStartY"] = nodeMovingTemp["lineEndY"];
+                        
+                        //store nodename key
+                        var tempNodeNameString = JSON.stringify(tempNodeNameObj);
+                        mfJson[tempString] = tempNodeNameString;
+                        localStorage.setItem(localStorageKeyName,JSON.stringify(mfJson));
+                        //line name to be updated 
+                        var childNodeNameLine = "line-"+ tempString;
+            
+                        //redraw line with new coordinates
+                        updateLineSvg(tempNodeNameObj["lineStartX"],tempNodeNameObj["lineStartY"],tempNodeNameObj["lineEndX"],tempNodeNameObj["lineEndY"],childNodeNameLine);
+                    }
                 }
             }
         }
