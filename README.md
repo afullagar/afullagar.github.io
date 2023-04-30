@@ -1,4 +1,4 @@
-# mindfully by Ragalluf Dev
+# mindfully by Fullys Dev
 Mindfully mind mapping
 
 Mindamapping using LocalStorage and encoded offline storage. All data stays local to your machine and you can either CTRL-S (SAVE) the file as a snapshot to send to someone or export to file and it is base64 encoded and stored in a file for later import. This saves signifcant size in terms of html vs saving as an export of JSON format.
